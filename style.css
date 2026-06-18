@@ -202,4 +202,34 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,s
 #modal-btns{display:flex;gap:7px;justify-content:flex-end;}
 .m-btn{padding:7px 18px;border-radius:7px;font-size:12px;cursor:pointer;border:none;transition:all 0.12s;}
 .m-btn.ok{background:#534AB7;color:#fff;}.m-btn.ok:hover{background:#7F77DD;}
-.m-btn.no{background:rgba(255,255,255,0.05);color:#777;border:0.5px solid rgba(255,255,255,0.09);}.m-btn.no:hover{background:rgba(255,255,255,0.1);color:#eee;}
+.m-btn.no{background:rgba(255,255,255,0.05);color:#777;border:0.5px solid rgba(255,255,255,0.09);}.m-btn.no:hover{background:rgba(255,255,255,0.1);color:#eee;}/* ---- BOOT ---- */
+#boot{position:fixed;inset:0;background:#000;z-index:9999;overflow:hidden;display:grid;grid-template-columns:220px 1fr 220px;grid-template-rows:1fr auto;}
+#boot-canvas{position:absolute;inset:0;z-index:0;}
+#boot-scanlines{position:absolute;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);}
+#boot-left-panel,#boot-right-panel{position:relative;z-index:2;padding:24px 16px;border:0.5px solid rgba(83,74,183,0.25);margin:20px 0 0 20px;background:rgba(0,0,6,0.75);}
+#boot-right-panel{margin:20px 20px 0 0;}
+.edex-panel-title{font-family:monospace;font-size:9px;color:#534AB7;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid rgba(83,74,183,0.3);}
+.edex-panel-row{display:flex;justify-content:space-between;margin-bottom:6px;}
+.edex-k{font-family:monospace;font-size:10px;color:#2a2a5a;letter-spacing:1px;}
+.edex-v{font-family:monospace;font-size:10px;color:#534AB7;}
+.edex-panel-divider{height:0.5px;background:rgba(83,74,183,0.2);margin:12px 0;}
+#boot-log{font-family:monospace;font-size:10px;line-height:1.9;overflow:hidden;max-height:340px;}
+.blog{display:flex;gap:8px;align-items:baseline;}
+.bp{color:#1a1a4a;flex-shrink:0;font-size:9px;}
+.bt{color:#3a3a6a;}
+#boot-center{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;}
+#boot-os-ring{position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;}
+#boot-os-text{text-align:center;}
+#boot-os-name{font-family:monospace;font-size:28px;font-weight:700;color:#fff;letter-spacing:8px;text-shadow:0 0 40px rgba(127,119,221,0.8),0 0 10px rgba(127,119,221,0.4);}
+#boot-os-ver{font-family:monospace;font-size:10px;color:#534AB7;letter-spacing:4px;margin-top:4px;}
+#boot-status-line{font-family:monospace;font-size:11px;color:#534AB7;letter-spacing:2px;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.edex-blink{animation:blink 1.4s ease-in-out infinite;}
+#boot-bar-wrap{width:100%;max-width:280px;}
+#boot-bar-track{width:100%;height:2px;background:rgba(255,255,255,0.05);position:relative;overflow:visible;}
+#boot-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#3c34a0,#9F99EE);transition:width 0.2s ease;position:relative;}
+#boot-bar-fill::after{content:'';position:absolute;right:-1px;top:-5px;width:2px;height:12px;background:#9F99EE;opacity:0.85;}
+#boot-bar-meta{display:flex;justify-content:space-between;margin-top:6px;font-family:monospace;font-size:9px;color:#2a2a5a;}
+#boot-pct{color:#534AB7;}
+#boot-bottom-bar{grid-column:1/-1;position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:8px 20px;background:rgba(0,0,6,0.85);border-top:0.5px solid rgba(83,74,183,0.25);font-family:monospace;font-size:9px;color:#2a2a5a;letter-spacing:1px;}
+#boot-progress-label{color:#534AB7;}
