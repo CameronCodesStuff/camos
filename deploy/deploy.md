@@ -2,13 +2,16 @@
 
 ## Deploy in ~3 minutes
 
-### Option A - Dashboard (no install)
+### Option A - Use the already added proxy.
+Go straight to 'https://cameroncodesstuff.github.io/camos/' with everyhing ready!
+
+### Option B - Dashboard (no install)
 1. Go to https://dash.cloudflare.com -> Workers & Pages -> Create -> Create Worker.
 2. Name it `camos-proxy`, click Deploy.
 3. Click Edit code, delete the sample, paste ALL of `worker.js`, click Deploy.
 4. Copy your URL, e.g. `https://camos-proxy.YOURNAME.workers.dev`.
 
-### Option B - Wrangler CLI (uses module format)
+### Option C - Wrangler CLI (uses module format)
 If you prefer the CLI, it supports modern module syntax. Use Option A's
 file as-is (it works either way), or run:
 ```bash
