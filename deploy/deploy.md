@@ -1,16 +1,5 @@
 # CamOS Proxy - Cloudflare Worker
 
-The real fix for browsing. Runs server-side, so it rewrites every URL
-(links, images, fonts, scripts, runtime fetch/XHR) and strips CORS /
-X-Frame-Options headers that block public proxies.
-
-## About the "Unexpected token '*'" error
-That happens when the Cloudflare editor parses the Worker in the OLD
-"Service Worker" mode, which doesn't allow `export default`. This file
-is written in Service Worker format (`addEventListener("fetch", ...)`),
-so it works in the dashboard editor WITHOUT needing module mode. Just
-paste and deploy.
-
 ## Deploy in ~3 minutes
 
 ### Option A - Dashboard (no install)
