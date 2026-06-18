@@ -9,52 +9,69 @@
 </head>
 <body>
 
+<!-- ===================== BOOT ===================== -->
 <div id="boot">
   <canvas id="boot-canvas"></canvas>
   <div id="boot-scanlines"></div>
 
-  <div id="boot-left-panel">
-    <div class="edex-panel-title">SYSTEM</div>
-    <div class="edex-panel-row"><span class="edex-k">ARCH</span><span class="edex-v">x86_64</span></div>
-    <div class="edex-panel-row"><span class="edex-k">CPU</span><span class="edex-v" id="boot-cpu-val">0x0000</span></div>
-    <div class="edex-panel-row"><span class="edex-k">MEM</span><span class="edex-v">16384 MB</span></div>
-    <div class="edex-panel-row"><span class="edex-k">GPU</span><span class="edex-v">VIRT-GL</span></div>
-    <div class="edex-panel-row"><span class="edex-k">NET</span><span class="edex-v">192.168.1.1</span></div>
-    <div class="edex-panel-row"><span class="edex-k">DISK</span><span class="edex-v">/dev/vda1</span></div>
-    <div class="edex-panel-divider"></div>
-    <div class="edex-panel-title">BIOS</div>
-    <div class="edex-panel-row"><span class="edex-k">VER</span><span class="edex-v">CAM-BIOS 2.40</span></div>
-    <div class="edex-panel-row"><span class="edex-k">DATE</span><span class="edex-v" id="boot-bios-date"></span></div>
-    <div class="edex-panel-row"><span class="edex-k">BOOT</span><span class="edex-v">UEFI</span></div>
-    <div class="edex-panel-row"><span class="edex-k">SEC</span><span class="edex-v">ENABLED</span></div>
-  </div>
+  <div id="boot-layout">
 
-  <div id="boot-center">
-    <div id="boot-os-ring">
-      <div id="boot-os-text">
-        <div id="boot-os-name">CamOS</div>
-        <div id="boot-os-ver">v3.0</div>
+    <!-- LEFT PANEL -->
+    <div class="boot-panel" id="boot-panel-left">
+      <div class="bp-title">SYS INFO</div>
+      <div class="bp-row"><span class="bpk">ARCH</span><span class="bpv">x86_64</span></div>
+      <div class="bp-row"><span class="bpk">CPU</span><span class="bpv" id="boot-cpu-val">0x0000</span></div>
+      <div class="bp-row"><span class="bpk">MEM</span><span class="bpv">16384 MB</span></div>
+      <div class="bp-row"><span class="bpk">DISK</span><span class="bpv">/dev/vda1</span></div>
+      <div class="bp-row"><span class="bpk">GPU</span><span class="bpv">VIRT-GL</span></div>
+      <div class="bp-row"><span class="bpk">NET</span><span class="bpv">DHCP OK</span></div>
+      <div class="bp-divider"></div>
+      <div class="bp-title">BIOS</div>
+      <div class="bp-row"><span class="bpk">VER</span><span class="bpv">CAM-BIOS 2.40</span></div>
+      <div class="bp-row"><span class="bpk">DATE</span><span class="bpv" id="boot-bios-date">--/--/----</span></div>
+      <div class="bp-row"><span class="bpk">BOOT</span><span class="bpv">UEFI</span></div>
+      <div class="bp-row"><span class="bpk">SEC</span><span class="bpv" style="color:#33a05a">ENABLED</span></div>
+      <div class="bp-divider"></div>
+      <div id="boot-log"></div>
+    </div>
+
+    <!-- CENTER -->
+    <div id="boot-center">
+      <div id="boot-ring-wrap">
+        <canvas id="boot-ring-canvas"></canvas>
+        <div id="boot-ring-inner">
+          <div id="boot-os-name">CamOS</div>
+          <div id="boot-os-ver">v3.0</div>
+          <div id="boot-os-sub">BROWSER EDITION</div>
+        </div>
+      </div>
+      <div id="boot-status">Initializing...</div>
+      <div id="boot-bar-wrap">
+        <div id="boot-bar-track"><div id="boot-bar-fill"></div></div>
+        <div id="boot-bar-meta">
+          <span id="boot-bar-phase">BIOS POST</span>
+          <span id="boot-pct">0%</span>
+        </div>
       </div>
     </div>
-    <div id="boot-status-line" class="edex-blink">INITIALIZING SYSTEM...</div>
-    <div id="boot-bar-wrap">
-      <div id="boot-bar-track"><div id="boot-bar-fill"></div></div>
-      <div id="boot-bar-meta"><span id="boot-bar-label">BIOS POST</span><span id="boot-pct">0%</span></div>
+
+    <!-- RIGHT PANEL -->
+    <div class="boot-panel" id="boot-panel-right">
+      <div class="bp-title">BOOT SEQUENCE</div>
+      <div id="boot-steps-right"></div>
     </div>
+
   </div>
 
-  <div id="boot-right-panel">
-    <div class="edex-panel-title">BOOT LOG</div>
-    <div id="boot-log"></div>
-  </div>
-
-  <div id="boot-bottom-bar">
-    <span id="boot-time-footer"></span>
-    <span>CAM-OS &nbsp;&bull;&nbsp; CamOS v3.0 &nbsp;&bull;&nbsp; SECURE BOOT</span>
-    <span id="boot-progress-label">LOADING</span>
+  <!-- BOTTOM BAR -->
+  <div id="boot-bottom">
+    <span>CAM-BIOS v2.40 &nbsp;|&nbsp; CamOS v3.0</span>
+    <span id="boot-clock">00:00:00</span>
+    <span id="boot-pl">0% COMPLETE</span>
   </div>
 </div>
 
+<!-- ===================== LOGIN ===================== -->
 <div id="login">
   <div id="login-bg"></div>
   <div id="login-card">
@@ -70,6 +87,7 @@
   <div id="login-hint">hint: press enter or type 1234</div>
 </div>
 
+<!-- ===================== DESKTOP ===================== -->
 <div id="desktop">
   <canvas id="desktop-canvas"></canvas>
 
@@ -86,6 +104,7 @@
     <i class="ti ti-cpu"></i><span>System</span>
   </div>
 
+  <!-- TERMINAL -->
   <div class="win" id="win-terminal" style="width:540px;height:340px;top:80px;left:120px">
     <div class="win-bar" id="drag-terminal">
       <div class="wbtns">
@@ -108,7 +127,8 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
-  <div class="win" id="win-browser" style="width:760px;height:540px;top:40px;left:140px">
+  <!-- BROWSER -->
+  <div class="win" id="win-browser" style="width:800px;height:560px;top:40px;left:130px">
     <div class="win-bar" id="drag-browser">
       <div class="wbtns">
         <div class="wb cl" onclick="closeApp('browser')" title="Close"></div>
@@ -130,9 +150,9 @@ Type <span style="color:#9090dd">'help'</span> for commands.
         <span id="br-security"></span>
         <input id="br-url" placeholder="Search or enter a URL..." autocomplete="off" spellcheck="false">
         <div class="br-btn accent" onclick="brGo()" title="Go"><i class="ti ti-corner-down-left"></i></div>
-        <div class="br-btn" onclick="brDlPage()" title="Download page"><i class="ti ti-download"></i></div>
+        <div class="br-btn" onclick="brDlPage()" title="Download"><i class="ti ti-download"></i></div>
         <div class="br-btn" onclick="brBookmark()" title="Bookmark"><i class="ti ti-bookmark"></i></div>
-        <div class="br-btn" onclick="brOpenExt()" title="Open in real browser"><i class="ti ti-external-link"></i></div>
+        <div class="br-btn" onclick="brOpenExt()" title="Open in browser"><i class="ti ti-external-link"></i></div>
       </div>
       <div id="br-content">
         <div id="br-loading">
@@ -142,7 +162,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
         <div id="br-err">
           <i class="ti ti-world-off"></i>
           <h3>Cannot load page</h3>
-          <p id="br-err-detail">All proxies failed for this URL.</p>
+          <p id="br-err-detail">All proxies failed. The site may block external access.</p>
           <div class="br-err-actions">
             <button class="br-err-btn primary" onclick="brOpenExt()"><i class="ti ti-external-link"></i>Open in browser</button>
             <button class="br-err-btn" onclick="brDlFromErr()"><i class="ti ti-download"></i>Try download</button>
@@ -153,24 +173,26 @@ Type <span style="color:#9090dd">'help'</span> for commands.
         </div>
         <div id="br-home" class="vis">
           <div id="br-home-logo">CamOS Browser</div>
-          <div id="br-home-sub">v3.0 &middot; PROXY ENGINE &middot; 8 FALLBACKS</div>
+          <div id="br-home-sub">v3.0 &bull; PROXY ENGINE &bull; POSTMESSAGE NAV</div>
           <div id="br-home-search">
-            <input id="br-search-inp" placeholder="Search or enter URL..." autocomplete="off"
+            <input id="br-search-inp" placeholder="Search DuckDuckGo or enter URL..." autocomplete="off"
               onkeydown="if(event.key==='Enter'){brGo(this.value);this.value='';}">
             <button id="br-search-btn" onclick="brGo(document.getElementById('br-search-inp').value)">Go</button>
           </div>
           <div id="br-home-grid">
             <div class="br-tile" onclick="brGo('https://en.wikipedia.org')"><i class="ti ti-books"></i><span>Wikipedia</span></div>
             <div class="br-tile" onclick="brGo('https://github.com')"><i class="ti ti-brand-github"></i><span>GitHub</span></div>
-            <div class="br-tile" onclick="brGo('https://developer.mozilla.org')"><i class="ti ti-file-code"></i><span>MDN</span></div>
+            <div class="br-tile" onclick="brGo('https://developer.mozilla.org')"><i class="ti ti-file-code"></i><span>MDN Docs</span></div>
             <div class="br-tile" onclick="brGo('https://news.ycombinator.com')"><i class="ti ti-news"></i><span>Hacker News</span></div>
             <div class="br-tile" onclick="brGo('https://old.reddit.com')"><i class="ti ti-brand-reddit"></i><span>Reddit</span></div>
-            <div class="br-tile" onclick="brGo('https://search.brave.com')"><i class="ti ti-search"></i><span>Brave Search</span></div>
+            <div class="br-tile" onclick="brGo('https://lite.duckduckgo.com/lite')"><i class="ti ti-search"></i><span>DDG Search</span></div>
             <div class="br-tile" onclick="brGo('https://archive.org')"><i class="ti ti-archive"></i><span>Archive.org</span></div>
             <div class="br-tile" onclick="brGo('https://www.openstreetmap.org')"><i class="ti ti-map"></i><span>OpenStreetMap</span></div>
           </div>
         </div>
-        <iframe id="br-iframe" sandbox="allow-scripts allow-forms allow-popups" title="Browser"></iframe>
+        <iframe id="br-iframe"
+          sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
+          title="Browser content"></iframe>
         <div id="dl-panel">
           <div id="dl-panel-hdr">
             <span><i class="ti ti-download" style="font-size:11px;margin-right:4px"></i>Downloads</span>
@@ -182,6 +204,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
+  <!-- NOTEPAD -->
   <div class="win" id="win-notepad" style="width:460px;height:360px;top:120px;left:210px">
     <div class="win-bar" id="drag-notepad">
       <div class="wbtns">
@@ -210,6 +233,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
+  <!-- SYSINFO -->
   <div class="win" id="win-sysinfo" style="width:360px;height:360px;top:100px;left:380px">
     <div class="win-bar" id="drag-sysinfo">
       <div class="wbtns">
@@ -221,29 +245,24 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
     <div class="win-body">
       <div id="si-body">
-        <div class="si-sec">
-          <h3>System</h3>
+        <div class="si-sec"><h3>System</h3>
           <div class="si-row"><span class="si-k">OS</span><span class="si-v">CamOS 3.0</span></div>
           <div class="si-row"><span class="si-k">Kernel</span><span class="si-v">HTML5 Runtime</span></div>
           <div class="si-row"><span class="si-k">Shell</span><span class="si-v">camsh 3.0</span></div>
           <div class="si-row"><span class="si-k">User</span><span class="si-v">cameron</span></div>
           <div class="si-row"><span class="si-k">Uptime</span><span class="si-v" id="si-up">0m 0s</span></div>
         </div>
-        <div class="si-sec">
-          <h3>Hardware</h3>
+        <div class="si-sec"><h3>Hardware</h3>
           <div class="si-row"><span class="si-k">Platform</span><span class="si-v" id="si-plat">...</span></div>
           <div class="si-row"><span class="si-k">CPU Threads</span><span class="si-v" id="si-cores">...</span></div>
           <div class="si-row"><span class="si-k">RAM</span><span class="si-v" id="si-mem">...</span></div>
           <div class="si-row"><span class="si-k">Resolution</span><span class="si-v" id="si-res">...</span></div>
           <div style="margin-top:9px">
-            <div style="display:flex;justify-content:space-between;font-size:9px;color:#2a2a4a;margin-bottom:4px">
-              <span>CPU Load</span><span id="si-cpu-pct">--</span>
-            </div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:#2a2a4a;margin-bottom:4px"><span>CPU Load</span><span id="si-cpu-pct">--</span></div>
             <div id="si-cpu-bar"><div id="si-cpu-fill"></div></div>
           </div>
         </div>
-        <div class="si-sec">
-          <h3>Browser</h3>
+        <div class="si-sec"><h3>Browser</h3>
           <div class="si-row"><span class="si-k">Engine</span><span class="si-v" id="si-eng">...</span></div>
           <div class="si-row"><span class="si-k">Language</span><span class="si-v" id="si-lang">...</span></div>
           <div class="si-row"><span class="si-k">Network</span><span class="si-v" id="si-net">...</span></div>
@@ -256,9 +275,9 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     <button id="start-btn" onclick="toggleMenu()">&#x229E; Start</button>
     <div class="tb-sep"></div>
     <div class="tb-app" id="tb-terminal" onclick="tbClick('terminal')"><i class="ti ti-terminal"></i>Terminal</div>
-    <div class="tb-app" id="tb-browser"  onclick="tbClick('browser')"><i class="ti ti-world"></i>Browser</div>
-    <div class="tb-app" id="tb-notepad"  onclick="tbClick('notepad')"><i class="ti ti-file-text"></i>Notepad</div>
-    <div class="tb-app" id="tb-sysinfo"  onclick="tbClick('sysinfo')"><i class="ti ti-cpu"></i>System</div>
+    <div class="tb-app" id="tb-browser" onclick="tbClick('browser')"><i class="ti ti-world"></i>Browser</div>
+    <div class="tb-app" id="tb-notepad" onclick="tbClick('notepad')"><i class="ti ti-file-text"></i>Notepad</div>
+    <div class="tb-app" id="tb-sysinfo" onclick="tbClick('sysinfo')"><i class="ti ti-cpu"></i>System</div>
     <div id="tb-right"><div id="tb-date"></div><div id="tb-clock"></div></div>
   </div>
 
@@ -282,7 +301,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     <div class="ctx-it" onclick="openApp('browser');hideCtx()"><i class="ti ti-world"></i>Browser</div>
     <div class="ctx-it" onclick="openApp('notepad');hideCtx()"><i class="ti ti-file-text"></i>Notepad</div>
     <div class="ctx-sep"></div>
-    <div class="ctx-it" onclick="showNotif('info','CamOS v3.0');hideCtx()"><i class="ti ti-info-circle"></i>About CamOS</div>
+    <div class="ctx-it" onclick="showNotif('info','CamOS v3.0');hideCtx()"><i class="ti ti-info-circle"></i>About</div>
   </div>
 
   <div id="notif"><div id="notif-title"></div><div id="notif-body"></div></div>
@@ -300,7 +319,43 @@ Type <span style="color:#9090dd">'help'</span> for commands.
   </div>
 
 </div>
-<script src="script.js"></script>
 
+<script src="script.js"></script>
+<script>
+(function() {
+  var rc = document.getElementById('boot-ring-canvas');
+  if (!rc) return;
+  var ctx = rc.getContext('2d');
+  var SIZE = 180;
+  rc.width = SIZE; rc.height = SIZE;
+  var cx = SIZE/2, cy = SIZE/2;
+  var angle = 0;
+  function draw() {
+    ctx.clearRect(0,0,SIZE,SIZE);
+    var rings = [
+      {r:82, speed:0.5, lw:1.5, color:'rgba(127,119,221,0.7)', dash:[6,3]},
+      {r:66, speed:-0.7, lw:1, color:'rgba(83,74,183,0.55)', dash:[4,4]},
+      {r:50, speed:1.1, lw:0.8, color:'rgba(159,153,238,0.4)', dash:[2,5]}
+    ];
+    rings.forEach(function(ring) {
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle * ring.speed);
+      ctx.setLineDash(ring.dash);
+      ctx.beginPath(); ctx.arc(0,0,ring.r,0,Math.PI*2);
+      ctx.strokeStyle = ring.color; ctx.lineWidth = ring.lw; ctx.stroke();
+      ctx.restore();
+    });
+    ctx.setLineDash([]);
+    for (var pi=0; pi<4; pi++) {
+      var pa = (Math.PI/2)*pi + angle*1.5;
+      var pr = 68;
+      ctx.beginPath(); ctx.arc(cx+Math.cos(pa)*pr, cy+Math.sin(pa)*pr, 2.5, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(159,153,238,0.9)'; ctx.fill();
+    }
+    angle += 0.012;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
 </body>
 </html>
