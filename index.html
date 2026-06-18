@@ -9,25 +9,32 @@
 </head>
 <body>
 
-<!-- BOOT -->
 <div id="boot">
   <canvas id="boot-canvas"></canvas>
-  <div id="boot-scanlines"></div>
-  <div id="boot-vignette"></div>
-  <div id="boot-content">
-    <div id="boot-ring">
-      <div class="ring ring-1"></div><div class="ring ring-2"></div><div class="ring ring-3"></div>
-      <div id="boot-icon-wrap"><i class="ti ti-device-desktop"></i></div>
+  <div id="boot-center">
+    <div id="boot-header">SYSTEM BOOT &mdash; <span>CamOS v3.0</span> &mdash; SECURE BOOT ENABLED</div>
+    <div id="boot-hex">
+      <div id="boot-hex-center">
+        <div id="boot-os-name">CAM</div>
+        <div id="boot-os-ver">OS v3.0</div>
+      </div>
     </div>
-    <div id="boot-logo-text">CamOS</div>
-    <div id="boot-ver">version 3.0 &middot; browser edition</div>
-    <div id="boot-bar-track"><div id="boot-bar-fill"></div></div>
-    <div id="boot-msg">Initializing...</div>
-    <div id="boot-log-box"><div id="boot-log-fade"></div><div id="boot-log"></div></div>
+    <div id="boot-progress-wrap">
+      <div id="boot-bar-bg"><div id="boot-bar-fill"></div></div>
+      <div id="boot-bar-meta"><span>INITIALIZING</span><span id="boot-pct">0%</span></div>
+    </div>
+    <div id="boot-log-wrap">
+      <div id="boot-log-top"></div>
+      <div id="boot-log"></div>
+    </div>
+  </div>
+  <div id="boot-footer">
+    <span>CAM-BIOS v2.40</span>
+    <span id="boot-time-footer"></span>
+    <span>UEFI SECURE BOOT</span>
   </div>
 </div>
 
-<!-- LOGIN -->
 <div id="login">
   <div id="login-bg"></div>
   <div id="login-card">
@@ -43,7 +50,6 @@
   <div id="login-hint">hint: press enter or type 1234</div>
 </div>
 
-<!-- DESKTOP -->
 <div id="desktop">
   <canvas id="desktop-canvas"></canvas>
 
@@ -60,13 +66,12 @@
     <i class="ti ti-cpu"></i><span>System</span>
   </div>
 
-  <!-- TERMINAL -->
   <div class="win" id="win-terminal" style="width:540px;height:340px;top:80px;left:120px">
     <div class="win-bar" id="drag-terminal">
       <div class="wbtns">
         <div class="wb cl" onclick="closeApp('terminal')" title="Close"></div>
-        <div class="wb mn" onclick="minApp('terminal')"   title="Minimize"></div>
-        <div class="wb mx" onclick="maxApp('terminal')"   title="Maximize"></div>
+        <div class="wb mn" onclick="minApp('terminal')" title="Minimize"></div>
+        <div class="wb mx" onclick="maxApp('terminal')" title="Maximize"></div>
       </div>
       <div class="win-ttl"><i class="ti ti-terminal"></i>Terminal &mdash; camsh 3.0</div>
     </div>
@@ -83,48 +88,37 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
-  <!-- BROWSER -->
   <div class="win" id="win-browser" style="width:760px;height:540px;top:40px;left:140px">
     <div class="win-bar" id="drag-browser">
       <div class="wbtns">
         <div class="wb cl" onclick="closeApp('browser')" title="Close"></div>
-        <div class="wb mn" onclick="minApp('browser')"   title="Minimize"></div>
-        <div class="wb mx" onclick="maxApp('browser')"   title="Maximize"></div>
+        <div class="wb mn" onclick="minApp('browser')" title="Minimize"></div>
+        <div class="wb mx" onclick="maxApp('browser')" title="Maximize"></div>
       </div>
       <div class="win-ttl"><i class="ti ti-world"></i><span id="br-win-title">Browser</span></div>
     </div>
     <div class="win-body">
-
-      <!-- Tab strip — horizontal, side by side -->
       <div id="br-tabs">
         <div id="br-tabs-inner"></div>
         <button id="br-new-tab" onclick="newBrTab()" title="New tab">+</button>
       </div>
-
-      <!-- Address bar -->
       <div id="br-bar">
-        <div class="br-btn" onclick="brBack()"     title="Back"><i class="ti ti-arrow-left"></i></div>
-        <div class="br-btn" onclick="brFwd()"      title="Forward"><i class="ti ti-arrow-right"></i></div>
-        <div class="br-btn" onclick="brReload()"   title="Reload"><i class="ti ti-refresh"></i></div>
-        <div class="br-btn" onclick="brHome()"     title="Home"><i class="ti ti-home"></i></div>
+        <div class="br-btn" onclick="brBack()" title="Back"><i class="ti ti-arrow-left"></i></div>
+        <div class="br-btn" onclick="brFwd()" title="Forward"><i class="ti ti-arrow-right"></i></div>
+        <div class="br-btn" onclick="brReload()" title="Reload"><i class="ti ti-refresh"></i></div>
+        <div class="br-btn" onclick="brHome()" title="Home"><i class="ti ti-home"></i></div>
         <span id="br-security"></span>
         <input id="br-url" placeholder="Search or enter a URL..." autocomplete="off" spellcheck="false">
         <div class="br-btn accent" onclick="brGo()" title="Go"><i class="ti ti-corner-down-left"></i></div>
-        <div class="br-btn" onclick="brDlPage()"   title="Download page"><i class="ti ti-download"></i></div>
+        <div class="br-btn" onclick="brDlPage()" title="Download page"><i class="ti ti-download"></i></div>
         <div class="br-btn" onclick="brBookmark()" title="Bookmark"><i class="ti ti-bookmark"></i></div>
-        <div class="br-btn" onclick="window.open(brTabs[brCurTab]&&brTabs[brCurTab].url,'_blank','noopener')" title="Open in real browser"><i class="ti ti-external-link"></i></div>
+        <div class="br-btn" onclick="brOpenExt()" title="Open in real browser"><i class="ti ti-external-link"></i></div>
       </div>
-
-      <!-- Content area — ALL panels always in DOM -->
       <div id="br-content">
-
-        <!-- Loading -->
         <div id="br-loading">
           <div id="br-spinner"></div>
           <span id="br-loading-msg">Connecting...</span>
         </div>
-
-        <!-- Error -->
         <div id="br-err">
           <i class="ti ti-world-off"></i>
           <h3>Cannot load page</h3>
@@ -137,13 +131,11 @@ Type <span style="color:#9090dd">'help'</span> for commands.
           <a id="br-open-ext" href="#" target="_blank" rel="noopener" style="display:none"></a>
           <span id="br-dl-link" data-url=""></span>
         </div>
-
-        <!-- Home page -->
         <div id="br-home" class="vis">
           <div id="br-home-logo">CamOS Browser</div>
-          <div id="br-home-sub">v3.0 &middot; PROXY ENGINE</div>
+          <div id="br-home-sub">v3.0 &middot; PROXY ENGINE &middot; 8 FALLBACKS</div>
           <div id="br-home-search">
-            <input id="br-search-inp" placeholder="Search with Brave or enter a URL..." autocomplete="off"
+            <input id="br-search-inp" placeholder="Search or enter URL..." autocomplete="off"
               onkeydown="if(event.key==='Enter'){brGo(this.value);this.value='';}">
             <button id="br-search-btn" onclick="brGo(document.getElementById('br-search-inp').value)">Go</button>
           </div>
@@ -158,32 +150,24 @@ Type <span style="color:#9090dd">'help'</span> for commands.
             <div class="br-tile" onclick="brGo('https://www.openstreetmap.org')"><i class="ti ti-map"></i><span>OpenStreetMap</span></div>
           </div>
         </div>
-
-        <!-- Iframe — only shown when content is loaded -->
-        <iframe id="br-iframe"
-          sandbox="allow-scripts allow-forms allow-popups"
-          title="Browser content"></iframe>
-
-        <!-- Download panel — slides up from bottom -->
+        <iframe id="br-iframe" sandbox="allow-scripts allow-forms allow-popups" title="Browser"></iframe>
         <div id="dl-panel">
           <div id="dl-panel-hdr">
-            <span><i class="ti ti-download" style="font-size:12px;margin-right:5px"></i>Downloads</span>
+            <span><i class="ti ti-download" style="font-size:11px;margin-right:4px"></i>Downloads</span>
             <span id="dl-close" onclick="brHideDlPanel()"><i class="ti ti-x"></i></span>
           </div>
           <div id="dl-list"></div>
         </div>
+      </div>
+    </div>
+  </div>
 
-      </div><!-- /br-content -->
-    </div><!-- /win-body -->
-  </div><!-- /win-browser -->
-
-  <!-- NOTEPAD -->
   <div class="win" id="win-notepad" style="width:460px;height:360px;top:120px;left:210px">
     <div class="win-bar" id="drag-notepad">
       <div class="wbtns">
         <div class="wb cl" onclick="closeApp('notepad')" title="Close"></div>
-        <div class="wb mn" onclick="minApp('notepad')"   title="Minimize"></div>
-        <div class="wb mx" onclick="maxApp('notepad')"   title="Maximize"></div>
+        <div class="wb mn" onclick="minApp('notepad')" title="Minimize"></div>
+        <div class="wb mx" onclick="maxApp('notepad')" title="Maximize"></div>
       </div>
       <div class="win-ttl"><i class="ti ti-file-text"></i>Notepad</div>
     </div>
@@ -206,13 +190,12 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
-  <!-- SYSINFO -->
   <div class="win" id="win-sysinfo" style="width:360px;height:360px;top:100px;left:380px">
     <div class="win-bar" id="drag-sysinfo">
       <div class="wbtns">
         <div class="wb cl" onclick="closeApp('sysinfo')" title="Close"></div>
-        <div class="wb mn" onclick="minApp('sysinfo')"   title="Minimize"></div>
-        <div class="wb mx" onclick="maxApp('sysinfo')"   title="Maximize"></div>
+        <div class="wb mn" onclick="minApp('sysinfo')" title="Minimize"></div>
+        <div class="wb mx" onclick="maxApp('sysinfo')" title="Maximize"></div>
       </div>
       <div class="win-ttl"><i class="ti ti-cpu"></i>System Info</div>
     </div>
@@ -221,7 +204,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
         <div class="si-sec">
           <h3>System</h3>
           <div class="si-row"><span class="si-k">OS</span><span class="si-v">CamOS 3.0</span></div>
-          <div class="si-row"><span class="si-k">Kernel</span><span class="si-v">HTML5 / JS Runtime</span></div>
+          <div class="si-row"><span class="si-k">Kernel</span><span class="si-v">HTML5 Runtime</span></div>
           <div class="si-row"><span class="si-k">Shell</span><span class="si-v">camsh 3.0</span></div>
           <div class="si-row"><span class="si-k">User</span><span class="si-v">cameron</span></div>
           <div class="si-row"><span class="si-k">Uptime</span><span class="si-v" id="si-up">0m 0s</span></div>
@@ -232,8 +215,8 @@ Type <span style="color:#9090dd">'help'</span> for commands.
           <div class="si-row"><span class="si-k">CPU Threads</span><span class="si-v" id="si-cores">...</span></div>
           <div class="si-row"><span class="si-k">RAM</span><span class="si-v" id="si-mem">...</span></div>
           <div class="si-row"><span class="si-k">Resolution</span><span class="si-v" id="si-res">...</span></div>
-          <div style="margin-top:10px">
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:#333;margin-bottom:5px">
+          <div style="margin-top:9px">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:#2a2a4a;margin-bottom:4px">
               <span>CPU Load</span><span id="si-cpu-pct">--</span>
             </div>
             <div id="si-cpu-bar"><div id="si-cpu-fill"></div></div>
@@ -249,7 +232,6 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
-  <!-- TASKBAR -->
   <div id="taskbar">
     <button id="start-btn" onclick="toggleMenu()">&#x229E; Start</button>
     <div class="tb-sep"></div>
@@ -260,7 +242,6 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     <div id="tb-right"><div id="tb-date"></div><div id="tb-clock"></div></div>
   </div>
 
-  <!-- START MENU -->
   <div id="smenu">
     <div class="sm-head"><div class="sm-av">C</div><div><div class="sm-un">Cameron</div><div class="sm-st">Local Account</div></div></div>
     <div class="sm-sec">Apps</div>
@@ -274,25 +255,22 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     <div class="sm-it danger" onclick="doLogout()"><i class="ti ti-logout"></i>Sign Out</div>
   </div>
 
-  <!-- CONTEXT MENU -->
   <div id="ctxmenu">
     <div class="ctx-it" onclick="changeWallpaper();hideCtx()"><i class="ti ti-palette"></i>Change Wallpaper</div>
     <div class="ctx-sep"></div>
-    <div class="ctx-it" onclick="openApp('terminal');hideCtx()"><i class="ti ti-terminal"></i>Open Terminal</div>
-    <div class="ctx-it" onclick="openApp('browser');hideCtx()"><i class="ti ti-world"></i>Open Browser</div>
-    <div class="ctx-it" onclick="openApp('notepad');hideCtx()"><i class="ti ti-file-text"></i>Open Notepad</div>
+    <div class="ctx-it" onclick="openApp('terminal');hideCtx()"><i class="ti ti-terminal"></i>Terminal</div>
+    <div class="ctx-it" onclick="openApp('browser');hideCtx()"><i class="ti ti-world"></i>Browser</div>
+    <div class="ctx-it" onclick="openApp('notepad');hideCtx()"><i class="ti ti-file-text"></i>Notepad</div>
     <div class="ctx-sep"></div>
-    <div class="ctx-it" onclick="showNotif('info','CamOS v3.0 Browser Edition');hideCtx()"><i class="ti ti-info-circle"></i>About CamOS</div>
+    <div class="ctx-it" onclick="showNotif('info','CamOS v3.0');hideCtx()"><i class="ti ti-info-circle"></i>About CamOS</div>
   </div>
 
-  <!-- NOTIFICATION -->
   <div id="notif"><div id="notif-title"></div><div id="notif-body"></div></div>
 
-  <!-- MODAL -->
   <div id="modal-overlay">
     <div id="modal-box">
       <h2 id="modal-h">Dialog</h2>
-      <p  id="modal-p"></p>
+      <p id="modal-p"></p>
       <input id="modal-input" type="text" placeholder="">
       <div id="modal-btns">
         <button class="m-btn no" onclick="closeModal(null)">Cancel</button>
@@ -301,7 +279,61 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
-</div><!-- /desktop -->
+</div>
 <script src="script.js"></script>
+<script>
+(function(){
+  function tick(){
+    var el=document.getElementById('boot-time-footer');
+    if(el)el.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+  tick();setInterval(tick,1000);
+
+  var hc=document.createElement('canvas');
+  hc.style.cssText='position:absolute;inset:0;width:100%;height:100%;';
+  var hexDiv=document.getElementById('boot-hex');
+  if(hexDiv){hexDiv.insertBefore(hc,hexDiv.firstChild);}
+
+  function drawHexFrame(){
+    var W=hexDiv?hexDiv.offsetWidth:180;
+    var H=hexDiv?hexDiv.offsetHeight:180;
+    hc.width=W;hc.height=H;
+    var ctx=hc.getContext('2d');
+    var cx=W/2,cy=H/2,angle=0,speed=0.012;
+    var radii=[W*0.48,W*0.35,W*0.22];
+    var colors=['rgba(83,74,183,0.7)','rgba(127,119,221,0.5)','rgba(159,153,238,0.35)'];
+    var widths=[1.5,1,0.8];
+    var dirs=[1,-1.4,0.8];
+
+    function frame(){
+      ctx.clearRect(0,0,W,H);
+      angle+=speed;
+      for(var ri=0;ri<radii.length;ri++){
+        var r=radii[ri],rot=angle*dirs[ri];
+        ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);
+        ctx.beginPath();
+        for(var i=0;i<6;i++){
+          var a=(Math.PI/3)*i;
+          if(i===0)ctx.moveTo(r*Math.cos(a),r*Math.sin(a));
+          else ctx.lineTo(r*Math.cos(a),r*Math.sin(a));
+        }
+        ctx.closePath();
+        ctx.strokeStyle=colors[ri];ctx.lineWidth=widths[ri];ctx.stroke();
+        ctx.restore();
+      }
+      for(var pi=0;pi<3;pi++){
+        var pa=(Math.PI*2/3)*pi+angle*2.5;
+        var pr=radii[0]*0.6;
+        ctx.beginPath();ctx.arc(cx+Math.cos(pa)*pr,cy+Math.sin(pa)*pr,2.5,0,Math.PI*2);
+        ctx.fillStyle='rgba(159,153,238,0.8)';ctx.fill();
+      }
+      requestAnimationFrame(frame);
+    }
+    frame();
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',drawHexFrame);}
+  else{drawHexFrame();}
+})();
+</script>
 </body>
 </html>
