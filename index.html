@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CamOS v3.0</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════ BOOT ═══════ -->
+<div id="boot">
+  <canvas id="boot-canvas"></canvas>
+  <div id="boot-scanlines"></div>
+  <div id="boot-vignette"></div>
+  <div id="boot-content">
+    <div id="boot-ring">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div id="boot-icon-wrap"><i class="ti ti-device-desktop"></i></div>
+    </div>
+    <div id="boot-logo-text">CamOS</div>
+    <div id="boot-ver">version 3.0 &middot; browser edition</div>
+    <div id="boot-bar-track"><div id="boot-bar-fill"></div></div>
+    <div id="boot-msg">Initializing...</div>
+    <div id="boot-log-box">
+      <div id="boot-log-fade"></div>
+      <div id="boot-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ LOGIN ═══════ -->
+<div id="login">
+  <div id="login-bg"></div>
+  <div id="login-card">
+    <div id="login-time">00:00</div>
+    <div id="login-date">Monday, January 1</div>
+    <div id="login-av"><i class="ti ti-user"></i></div>
+    <div id="login-name">Cameron</div>
+    <div id="login-role">LOCAL ACCOUNT</div>
+    <input type="password" id="login-pw" placeholder="Password" autocomplete="off">
+    <button id="login-go">Sign In &rarr;</button>
+    <div id="login-err"></div>
+  </div>
+  <div id="login-hint">hint: press enter or type 1234</div>
+</div>
+
+<!-- ═══════ DESKTOP ═══════ -->
+<div id="desktop">
+  <canvas id="desktop-canvas"></canvas>
+
+  <div class="desk-icon" style="top:20px;left:16px" ondblclick="openApp('terminal')">
+    <i class="ti ti-terminal"></i><span>Terminal</span>
+  </div>
+  <div class="desk-icon" style="top:100px;left:16px" ondblclick="openApp('browser')">
+    <i class="ti ti-world"></i><span>Browser</span>
+  </div>
+  <div class="desk-icon" style="top:180px;left:16px" ondblclick="openApp('notepad')">
+    <i class="ti ti-file-text"></i><span>Notepad</span>
+  </div>
+  <div class="desk-icon" style="top:260px;left:16px" ondblclick="openApp('sysinfo')">
+    <i class="ti ti-cpu"></i><span>System</span>
+  </div>
+
+  <!-- ─── TERMINAL ─── -->
+  <div class="win" id="win-terminal" style="width:540px;height:340px;top:80px;left:120px">
+    <div class="win-bar" id="drag-terminal">
+      <div class="wbtns">
+        <div class="wb cl" onclick="closeApp('terminal')" title="Close"></div>
+        <div class="wb mn" onclick="minApp('terminal')"   title="Minimize"></div>
+        <div class="wb mx" onclick="maxApp('terminal')"   title="Maximize"></div>
+      </div>
+      <div class="win-ttl"><i class="ti ti-terminal"></i>Terminal &mdash; camsh 3.0</div>
+    </div>
+    <div class="win-body">
+      <div id="t-body">
+        <div id="t-out">CamOS v3.0 &mdash; camsh 3.0
+Type <span style="color:#9090dd">'help'</span> for commands.
+</div>
+        <div id="t-row">
+          <span id="t-ps">cameron@camos:~$</span>
+          <input id="t-in" spellcheck="false" autocomplete="off">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── BROWSER ─── -->
+  <div class="win" id="win-browser" style="width:740px;height:520px;top:50px;left:150px">
+    <div class="win-bar" id="drag-browser">
+      <div class="wbtns">
+        <div class="wb cl" onclick="closeApp('browser')" title="Close"></div>
+        <div class="wb mn" onclick="minApp('browser')"   title="Minimize"></div>
+        <div class="wb mx" onclick="maxApp('browser')"   title="Maximize"></div>
+      </div>
+      <div class="win-ttl"><i class="ti ti-world"></i><span id="br-win-title">Browser</span></div>
+    </div>
+    <div class="win-body">
+      <!-- Tab bar -->
+      <div id="br-tabs">
+        <div id="br-tabs-inner"></div>
+        <button id="br-new-tab" onclick="newBrTab()" title="New tab">+</button>
+      </div>
+      <!-- Address bar -->
+      <div id="br-bar">
+        <div class="br-btn" onclick="brBack()"     title="Back"><i class="ti ti-arrow-left"></i></div>
+        <div class="br-btn" onclick="brFwd()"      title="Forward"><i class="ti ti-arrow-right"></i></div>
+        <div class="br-btn" onclick="brReload()"   title="Reload"><i class="ti ti-refresh"></i></div>
+        <div class="br-btn" onclick="brHome()"     title="Home"><i class="ti ti-home"></i></div>
+        <input id="br-url" placeholder="Search or type a URL...">
+        <div class="br-btn" onclick="brGo()"       title="Go" style="color:#7F77DD"><i class="ti ti-corner-down-left"></i></div>
+        <div class="br-btn" onclick="brBookmark()" title="Bookmark"><i class="ti ti-bookmark"></i></div>
+      </div>
+      <!-- Content area — ALL elements present in DOM from page load -->
+      <div id="br-content">
+        <!-- Loading spinner -->
+        <div id="br-loading">
+          <div id="br-spinner"></div>
+          <span>Loading...</span>
+        </div>
+        <!-- Error screen -->
+        <div id="br-err">
+          <i class="ti ti-world-off"></i>
+          <div id="br-err-title">Cannot load page</div>
+          <div id="br-err-msg">Could not fetch this page via any proxy.</div>
+          <a id="br-err-link" href="#" target="_blank" rel="noopener">
+            <i class="ti ti-external-link"></i> Open in real browser
+          </a>
+        </div>
+        <!-- Home page -->
+        <div id="br-home">
+          <div id="br-home-logo">CamOS Browser</div>
+          <div id="br-home-grid">
+            <div class="br-tile" onclick="brGo('https://en.wikipedia.org')">
+              <i class="ti ti-books"></i><span>Wikipedia</span>
+            </div>
+            <div class="br-tile" onclick="brGo('https://github.com')">
+              <i class="ti ti-brand-github"></i><span>GitHub</span>
+            </div>
+            <div class="br-tile" onclick="brGo('https://developer.mozilla.org')">
+              <i class="ti ti-file-code"></i><span>MDN Docs</span>
+            </div>
+            <div class="br-tile" onclick="brGo('https://news.ycombinator.com')">
+              <i class="ti ti-news"></i><span>HackerNews</span>
+            </div>
+            <div class="br-tile" onclick="brGo('https://old.reddit.com')">
+              <i class="ti ti-brand-reddit"></i><span>Reddit</span>
+            </div>
+            <div class="br-tile" onclick="brGo('https://stackoverflow.com')">
+              <i class="ti ti-stack-2"></i><span>Stack Overflow</span>
+            </div>
+            <div class="br-tile" onclick="brGo('https://archive.org')">
+              <i class="ti ti-archive"></i><span>Archive.org</span>
+            </div>
+            <div class="br-tile" onclick="brGo('https://www.openstreetmap.org')">
+              <i class="ti ti-map"></i><span>OpenStreetMap</span>
+            </div>
+          </div>
+          <div id="br-home-hint">
+            Pages are fetched via CORS proxies so most sites load.<br>
+            Type any URL above or click a tile to browse.
+          </div>
+        </div>
+        <!-- Iframe for fetched pages -->
+        <iframe id="br-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Browser content"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── NOTEPAD ─── -->
+  <div class="win" id="win-notepad" style="width:460px;height:360px;top:120px;left:210px">
+    <div class="win-bar" id="drag-notepad">
+      <div class="wbtns">
+        <div class="wb cl" onclick="closeApp('notepad')" title="Close"></div>
+        <div class="wb mn" onclick="minApp('notepad')"   title="Minimize"></div>
+        <div class="wb mx" onclick="maxApp('notepad')"   title="Maximize"></div>
+      </div>
+      <div class="win-ttl"><i class="ti ti-file-text"></i>Notepad</div>
+    </div>
+    <div class="win-body">
+      <div id="np-toolbar">
+        <button class="np-btn" onclick="npNew()"><i class="ti ti-file-plus"></i>New</button>
+        <button class="np-btn" onclick="npSave()"><i class="ti ti-device-floppy"></i>Save</button>
+        <button class="np-btn" onclick="npOpen()"><i class="ti ti-folder-open"></i>Open</button>
+        <button class="np-btn" onclick="npCopy()"><i class="ti ti-copy"></i>Copy</button>
+        <button class="np-btn" onclick="npToggleWrap()"><i class="ti ti-text-wrap"></i>Wrap</button>
+        <button class="np-btn" onclick="npWC()"><i class="ti ti-hash"></i>WC</button>
+        <button class="np-btn" onclick="npFind()"><i class="ti ti-search"></i>Find</button>
+      </div>
+      <textarea id="np-ta" spellcheck="false" placeholder="Start typing..."></textarea>
+      <div id="np-status">
+        <span id="np-wc">0 words</span>
+        <span id="np-cc">0 chars</span>
+        <span id="np-pos">Ln 1 Col 1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SYSINFO ─── -->
+  <div class="win" id="win-sysinfo" style="width:360px;height:360px;top:100px;left:380px">
+    <div class="win-bar" id="drag-sysinfo">
+      <div class="wbtns">
+        <div class="wb cl" onclick="closeApp('sysinfo')" title="Close"></div>
+        <div class="wb mn" onclick="minApp('sysinfo')"   title="Minimize"></div>
+        <div class="wb mx" onclick="maxApp('sysinfo')"   title="Maximize"></div>
+      </div>
+      <div class="win-ttl"><i class="ti ti-cpu"></i>System Info</div>
+    </div>
+    <div class="win-body">
+      <div id="si-body">
+        <div class="si-sec">
+          <h3>System</h3>
+          <div class="si-row"><span class="si-k">OS</span><span class="si-v">CamOS 3.0 Browser Edition</span></div>
+          <div class="si-row"><span class="si-k">Kernel</span><span class="si-v">HTML5 / JS Runtime</span></div>
+          <div class="si-row"><span class="si-k">Shell</span><span class="si-v">camsh 3.0</span></div>
+          <div class="si-row"><span class="si-k">User</span><span class="si-v">cameron</span></div>
+          <div class="si-row"><span class="si-k">Uptime</span><span class="si-v" id="si-up">0m 0s</span></div>
+        </div>
+        <div class="si-sec">
+          <h3>Hardware</h3>
+          <div class="si-row"><span class="si-k">Platform</span><span class="si-v" id="si-plat">...</span></div>
+          <div class="si-row"><span class="si-k">CPU Threads</span><span class="si-v" id="si-cores">...</span></div>
+          <div class="si-row"><span class="si-k">RAM</span><span class="si-v" id="si-mem">...</span></div>
+          <div class="si-row"><span class="si-k">Resolution</span><span class="si-v" id="si-res">...</span></div>
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#333;margin-bottom:5px">
+              <span>CPU Load</span><span id="si-cpu-pct">—</span>
+            </div>
+            <div id="si-cpu-bar"><div id="si-cpu-fill"></div></div>
+          </div>
+        </div>
+        <div class="si-sec">
+          <h3>Browser</h3>
+          <div class="si-row"><span class="si-k">Engine</span><span class="si-v" id="si-eng">...</span></div>
+          <div class="si-row"><span class="si-k">Language</span><span class="si-v" id="si-lang">...</span></div>
+          <div class="si-row"><span class="si-k">Network</span><span class="si-v" id="si-net">...</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TASKBAR ─── -->
+  <div id="taskbar">
+    <button id="start-btn" onclick="toggleMenu()">&#x229E; Start</button>
+    <div class="tb-sep"></div>
+    <div class="tb-app" id="tb-terminal" onclick="tbClick('terminal')"><i class="ti ti-terminal"></i>Terminal</div>
+    <div class="tb-app" id="tb-browser"  onclick="tbClick('browser')"><i class="ti ti-world"></i>Browser</div>
+    <div class="tb-app" id="tb-notepad"  onclick="tbClick('notepad')"><i class="ti ti-file-text"></i>Notepad</div>
+    <div class="tb-app" id="tb-sysinfo"  onclick="tbClick('sysinfo')"><i class="ti ti-cpu"></i>System</div>
+    <div id="tb-right">
+      <div id="tb-date"></div>
+      <div id="tb-clock"></div>
+    </div>
+  </div>
+
+  <!-- ─── START MENU ─── -->
+  <div id="smenu">
+    <div class="sm-head">
+      <div class="sm-av">C</div>
+      <div><div class="sm-un">Cameron</div><div class="sm-st">Local Account</div></div>
+    </div>
+    <div class="sm-sec">Apps</div>
+    <div class="sm-it" onclick="openApp('terminal');closeMenu()"><i class="ti ti-terminal"></i>Terminal</div>
+    <div class="sm-it" onclick="openApp('browser');closeMenu()"><i class="ti ti-world"></i>Browser</div>
+    <div class="sm-it" onclick="openApp('notepad');closeMenu()"><i class="ti ti-file-text"></i>Notepad</div>
+    <div class="sm-it" onclick="openApp('sysinfo');closeMenu()"><i class="ti ti-cpu"></i>System Info</div>
+    <div class="sm-div"></div>
+    <div class="sm-it" onclick="changeWallpaper();closeMenu()"><i class="ti ti-palette"></i>Change Wallpaper</div>
+    <div class="sm-div"></div>
+    <div class="sm-it danger" onclick="doLogout()"><i class="ti ti-logout"></i>Sign Out</div>
+  </div>
+
+  <!-- ─── CONTEXT MENU ─── -->
+  <div id="ctxmenu">
+    <div class="ctx-it" onclick="changeWallpaper();hideCtx()"><i class="ti ti-palette"></i>Change Wallpaper</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-it" onclick="openApp('terminal');hideCtx()"><i class="ti ti-terminal"></i>Open Terminal</div>
+    <div class="ctx-it" onclick="openApp('browser');hideCtx()"><i class="ti ti-world"></i>Open Browser</div>
+    <div class="ctx-it" onclick="openApp('notepad');hideCtx()"><i class="ti ti-file-text"></i>Open Notepad</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-it" onclick="showNotif('info','CamOS v3.0 Browser Edition');hideCtx()"><i class="ti ti-info-circle"></i>About CamOS</div>
+  </div>
+
+  <!-- ─── NOTIFICATION ─── -->
+  <div id="notif">
+    <div id="notif-title"></div>
+    <div id="notif-body"></div>
+  </div>
+
+  <!-- ─── MODAL ─── -->
+  <div id="modal-overlay">
+    <div id="modal-box">
+      <h2 id="modal-h">Dialog</h2>
+      <p id="modal-p"></p>
+      <input id="modal-input" type="text" placeholder="">
+      <div id="modal-btns">
+        <button class="m-btn no"  onclick="closeModal(null)">Cancel</button>
+        <button class="m-btn ok"  onclick="closeModal(document.getElementById('modal-input').value)">OK</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /desktop -->
+
+<script src="script.js"></script>
+</body>
+</html>
