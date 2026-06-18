@@ -1,18 +1,8 @@
 # CamOS v3.0
 
-> A browser-based desktop OS. Single-page, zero dependencies, fully self-contained.
+> A browser-based desktop OS. Still a work in progress.
 
 ---
-
-## Getting Started
-
-Drop all three files in the same folder and open `index.html` in any modern browser. No server, no install, no build step.
-
-```
-index.html   ← structure
-style.css    ← all styling
-script.js    ← all logic
-```
 
 **Password:** `1234` (or just press Enter)
 
