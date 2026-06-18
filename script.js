@@ -1,15 +1,26 @@
 var appStartTime = Date.now();
 
+/* ============================================================
+   Set this to your deployed Cloudflare Worker URL for the best
+   experience (see worker/DEPLOY.md). Leave blank to use the
+   public proxy fallbacks only.
+   Example: "https://camos-proxy.yourname.workers.dev"
+   ============================================================ */
+var CAMOS_PROXY = "";
+
+function P_WORKER(u){return CAMOS_PROXY.replace(/\/$/,'')+'/?u='+encodeURIComponent(u);}
 function P_CORSPROXY(u){return 'https://corsproxy.io/?url='+encodeURIComponent(u);}
 function P_ALLORIGINS(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);}
 function P_ALLORIGINS_GET(u){return 'https://api.allorigins.win/get?url='+encodeURIComponent(u);}
 function P_CODETABS(u){return 'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u);}
-function P_WSRV(u){return 'https://wsrv.nl/?url='+encodeURIComponent(u);}
 
-var HTML_PROXIES = [P_CORSPROXY, P_ALLORIGINS, P_CODETABS, P_ALLORIGINS_GET];
-var ASSET_PROXIES = [P_CODETABS, P_CORSPROXY, P_ALLORIGINS];
-
-function proxify(u){ return P_CODETABS(u); }
+function htmlProxies(){
+  var list=[];
+  if(CAMOS_PROXY)list.push(P_WORKER);
+  list.push(P_CORSPROXY,P_ALLORIGINS,P_CODETABS,P_ALLORIGINS_GET);
+  return list;
+}
+var USING_WORKER=false;
 
 var FS = {
   '/': {type:'dir',children:{
@@ -40,13 +51,16 @@ var WP=[
 var NICONS={welcome:'ti-device-desktop',bookmark:'ti-bookmark',notepad:'ti-file-text',wallpaper:'ti-palette',info:'ti-info-circle',error:'ti-alert-circle',download:'ti-download'};
 var ntimer=null, modalCB=null, bootIdx=0, bootAnimId=null;
 var BOOT_STEPS=[
-  'Initializing CamOS kernel',
-  'Mounting virtual filesystem',
+  'Initializing CamOS kernel 3.0',
+  'Probing virtual hardware',
+  'Mounting filesystem /dev/vda1',
   'Loading device drivers',
-  'Starting network services',
+  'Bringing up network interface',
+  'Starting camsh service',
   'Launching window manager',
   'Loading desktop environment',
-  'Ready'
+  'Finalizing user session',
+  'Welcome'
 ];
 
 /* ============ BOOT ============ */
@@ -56,22 +70,59 @@ function initBootCanvas(){
   var ctx=canvas.getContext('2d');
   function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
   resize(); window.addEventListener('resize',resize);
+
   var stars=[];
-  for(var i=0;i<90;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.8+0.2,s:Math.random()*1.4+0.3});
+  for(var i=0;i<140;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.9+0.1,tw:Math.random()*Math.PI*2});
+
+  var orbs=[];
+  for(var k=0;k<5;k++)orbs.push({a:Math.random()*Math.PI*2,r:0.18+k*0.07,sp:(0.0006+Math.random()*0.0008)*(k%2?1:-1),size:2+Math.random()*2});
+
   function frame(){
-    var W=canvas.width,H=canvas.height;
+    var W=canvas.width,H=canvas.height,cx=W/2,cy=H*0.42;
     ctx.clearRect(0,0,W,H);
-    var cx=W/2,cy=H/2;
-    var grad=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.7);
-    grad.addColorStop(0,'rgba(40,33,90,0.25)');
-    grad.addColorStop(1,'rgba(5,5,15,0)');
-    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-    stars.forEach(function(st){
+    var t=Date.now()/1000;
+
+    var bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.75);
+    bg.addColorStop(0,'rgba(44,36,98,0.30)');
+    bg.addColorStop(0.5,'rgba(20,16,48,0.10)');
+    bg.addColorStop(1,'rgba(5,4,14,0)');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+    for(var i=0;i<stars.length;i++){
+      var st=stars[i];
       var x=st.x*W, y=st.y*H;
-      ctx.beginPath(); ctx.arc(x,y,st.s*st.z,0,Math.PI*2);
-      ctx.fillStyle='rgba(159,153,238,'+(st.z*0.5)+')'; ctx.fill();
-      st.y+=0.0004*st.z; if(st.y>1)st.y=0;
-    });
+      var tw=0.4+0.6*Math.abs(Math.sin(t*1.5+st.tw));
+      ctx.beginPath(); ctx.arc(x,y,st.z*1.3,0,Math.PI*2);
+      ctx.fillStyle='rgba(159,153,238,'+(st.z*0.5*tw)+')'; ctx.fill();
+      st.y+=0.00018*st.z; if(st.y>1)st.y=0;
+    }
+
+    var minWH=Math.min(W,H);
+    for(var ri=0;ri<3;ri++){
+      var rad=minWH*(0.16+ri*0.07);
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(t*(0.12*(ri%2?-1:1)));
+      ctx.beginPath();
+      var seg=6;
+      for(var ss=0;ss<=seg;ss++){
+        var ang=(Math.PI*2/seg)*ss;
+        var px=Math.cos(ang)*rad, py=Math.sin(ang)*rad;
+        if(ss===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+      }
+      ctx.strokeStyle='rgba(127,119,221,'+(0.10-ri*0.02)+')';
+      ctx.lineWidth=1; ctx.stroke();
+      ctx.restore();
+    }
+
+    for(var o=0;o<orbs.length;o++){
+      var ob=orbs[o]; ob.a+=ob.sp*60;
+      var ox=cx+Math.cos(ob.a)*minWH*ob.r;
+      var oy=cy+Math.sin(ob.a)*minWH*ob.r;
+      var g=ctx.createRadialGradient(ox,oy,0,ox,oy,ob.size*4);
+      g.addColorStop(0,'rgba(159,153,238,0.8)');
+      g.addColorStop(1,'rgba(159,153,238,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(ox,oy,ob.size*4,0,Math.PI*2); ctx.fill();
+    }
+
     bootAnimId=requestAnimationFrame(frame);
   }
   frame();
@@ -80,24 +131,33 @@ function stopBootCanvas(){ if(bootAnimId){cancelAnimationFrame(bootAnimId);bootA
 
 function bootStep(){
   if(bootIdx>=BOOT_STEPS.length){
+    var st=document.getElementById('boot-status');if(st)st.textContent='Welcome to CamOS';
     stopBootCanvas();
     setTimeout(function(){
       var bs=document.getElementById('boot');
-      bs.style.transition='opacity 0.6s'; bs.style.opacity='0';
-      setTimeout(function(){bs.style.display='none';showLogin();},600);
-    },400);
+      bs.style.transition='opacity 0.7s'; bs.style.opacity='0';
+      setTimeout(function(){bs.style.display='none';showLogin();},700);
+    },500);
     return;
   }
-  var s=BOOT_STEPS[bootIdx];
+  var msg=BOOT_STEPS[bootIdx];
   var progress=Math.round((bootIdx+1)/BOOT_STEPS.length*100);
   var fill=document.getElementById('boot-bar-fill');
   var pct=document.getElementById('boot-pct');
   var status=document.getElementById('boot-status');
+  var log=document.getElementById('boot-log');
   if(fill)fill.style.width=progress+'%';
   if(pct)pct.textContent=progress+'%';
-  if(status)status.textContent=s;
+  if(status)status.textContent=msg;
+  if(log){
+    var line=document.createElement('div');
+    line.className='boot-log-line';
+    line.innerHTML='<span class="bll-ok">[ <i class="ti ti-check"></i> ]</span> '+msg;
+    log.appendChild(line);
+    while(log.children.length>5)log.removeChild(log.firstChild);
+  }
   bootIdx++;
-  setTimeout(bootStep,300+Math.random()*200);
+  setTimeout(bootStep,260+Math.random()*220);
 }
 
 /* ============ LOGIN ============ */
@@ -237,6 +297,7 @@ window.addEventListener('message',function(e){
   if(!e.data||typeof e.data!=='object')return;
   if(e.data.type==='CAMOS_NAV'&&typeof e.data.url==='string')brGo(e.data.url);
   if(e.data.type==='CAMOS_DL'&&typeof e.data.url==='string')brDownload(e.data.url,e.data.name);
+  if(e.data.type==='CAMOS_TITLE'&&typeof e.data.title==='string'&&e.data.title)brSetTitle(e.data.title);
 });
 
 function absUrl(href,base){
@@ -355,17 +416,20 @@ async function brNavTo(url,skipHistory){
 
   brSetUrl(url); brShow('loading');
   var lmsg=$br('br-loading-msg');
+  var proxies=htmlProxies();
   var fetched=false;
-  for(var pi=0;pi<HTML_PROXIES.length;pi++){
+  for(var pi=0;pi<proxies.length;pi++){
     try{
-      if(lmsg)lmsg.textContent='Loading via proxy '+(pi+1)+' of '+HTML_PROXIES.length+'...';
-      var resp=await fetch(HTML_PROXIES[pi](url),{signal:AbortSignal.timeout(11000)});
+      var isWorker=(CAMOS_PROXY&&pi===0);
+      if(lmsg)lmsg.textContent=isWorker?'Loading via CamOS Proxy...':'Loading via fallback proxy '+(pi+(CAMOS_PROXY?0:1))+'...';
+      var resp=await fetch(proxies[pi](url),{signal:AbortSignal.timeout(13000)});
       if(!resp.ok)continue;
       var html=await resp.text();
       if(!html||html.length<60)continue;
       if(html.charAt(0)==='{'&&html.indexOf('"contents"')>-1){
         try{var j=JSON.parse(html);if(j.contents)html=j.contents;}catch(e){}
       }
+      USING_WORKER=isWorker;
       brInjectHTML(html,url);
       fetched=true;break;
     }catch(e){}
@@ -376,6 +440,24 @@ async function brNavTo(url,skipHistory){
 function brInjectHTML(html,baseUrl,silent){
   var tm=html.match(/<title[^>]*>([^<]{0,120})<\/title>/i);
   var title=tm?tm[1].trim().replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>'):baseUrl;
+
+  if(USING_WORKER){
+    var navHook='<script>(function(){'
+      +'document.addEventListener("click",function(e){'
+      +'var a=e.target.closest&&e.target.closest("a[href]");if(!a)return;'
+      +'var h=a.getAttribute("href");if(!h||h.charAt(0)==="#"||h.indexOf("javascript:")===0)return;'
+      +'if(a.hasAttribute("download"))return;'
+      +'},true);'
+      +'})();<\/script>';
+    var iframeW=$br("br-iframe");if(!iframeW)return;
+    iframeW.removeAttribute("sandbox");
+    iframeW.srcdoc=html;
+    brShow("content");
+    var tw=brTabs[brCurTab];
+    if(tw){tw.title=title;tw.html=html;tw.url=baseUrl;tw.worker=true;}
+    brSetTitle(title);brSetUrl(baseUrl);
+    return;
+  }
 
   html=html.replace(/<base\b[^>]*>/gi,'');
 
