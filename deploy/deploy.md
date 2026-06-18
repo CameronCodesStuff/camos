@@ -3,7 +3,7 @@
 ## Deploy in ~3 minutes
 
 ### Option A - Use the already added proxy.
-Go straight to 'https://cameroncodesstuff.github.io/camos/' with everyhing ready!
+Go straight to https://cameroncodesstuff.github.io/camos/ with everyhing ready!
 
 ### Option B - Dashboard (no install)
 1. Go to https://dash.cloudflare.com -> Workers & Pages -> Create -> Create Worker.
