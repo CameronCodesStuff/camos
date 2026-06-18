@@ -11,27 +11,47 @@
 
 <div id="boot">
   <canvas id="boot-canvas"></canvas>
+  <div id="boot-scanlines"></div>
+
+  <div id="boot-left-panel">
+    <div class="edex-panel-title">SYSTEM</div>
+    <div class="edex-panel-row"><span class="edex-k">ARCH</span><span class="edex-v">x86_64</span></div>
+    <div class="edex-panel-row"><span class="edex-k">CPU</span><span class="edex-v" id="boot-cpu-val">0x0000</span></div>
+    <div class="edex-panel-row"><span class="edex-k">MEM</span><span class="edex-v">16384 MB</span></div>
+    <div class="edex-panel-row"><span class="edex-k">GPU</span><span class="edex-v">VIRT-GL</span></div>
+    <div class="edex-panel-row"><span class="edex-k">NET</span><span class="edex-v">192.168.1.1</span></div>
+    <div class="edex-panel-row"><span class="edex-k">DISK</span><span class="edex-v">/dev/vda1</span></div>
+    <div class="edex-panel-divider"></div>
+    <div class="edex-panel-title">BIOS</div>
+    <div class="edex-panel-row"><span class="edex-k">VER</span><span class="edex-v">CAM-BIOS 2.40</span></div>
+    <div class="edex-panel-row"><span class="edex-k">DATE</span><span class="edex-v" id="boot-bios-date"></span></div>
+    <div class="edex-panel-row"><span class="edex-k">BOOT</span><span class="edex-v">UEFI</span></div>
+    <div class="edex-panel-row"><span class="edex-k">SEC</span><span class="edex-v">ENABLED</span></div>
+  </div>
+
   <div id="boot-center">
-    <div id="boot-header">SYSTEM BOOT &mdash; <span>CamOS v3.0</span> &mdash; SECURE BOOT ENABLED</div>
-    <div id="boot-hex">
-      <div id="boot-hex-center">
-        <div id="boot-os-name">CAM</div>
-        <div id="boot-os-ver">OS v3.0</div>
+    <div id="boot-os-ring">
+      <div id="boot-os-text">
+        <div id="boot-os-name">CamOS</div>
+        <div id="boot-os-ver">v3.0</div>
       </div>
     </div>
-    <div id="boot-progress-wrap">
-      <div id="boot-bar-bg"><div id="boot-bar-fill"></div></div>
-      <div id="boot-bar-meta"><span>INITIALIZING</span><span id="boot-pct">0%</span></div>
-    </div>
-    <div id="boot-log-wrap">
-      <div id="boot-log-top"></div>
-      <div id="boot-log"></div>
+    <div id="boot-status-line" class="edex-blink">INITIALIZING SYSTEM...</div>
+    <div id="boot-bar-wrap">
+      <div id="boot-bar-track"><div id="boot-bar-fill"></div></div>
+      <div id="boot-bar-meta"><span id="boot-bar-label">BIOS POST</span><span id="boot-pct">0%</span></div>
     </div>
   </div>
-  <div id="boot-footer">
-    <span>CAM-BIOS v2.40</span>
+
+  <div id="boot-right-panel">
+    <div class="edex-panel-title">BOOT LOG</div>
+    <div id="boot-log"></div>
+  </div>
+
+  <div id="boot-bottom-bar">
     <span id="boot-time-footer"></span>
-    <span>UEFI SECURE BOOT</span>
+    <span>CAM-OS &nbsp;&bull;&nbsp; CamOS v3.0 &nbsp;&bull;&nbsp; SECURE BOOT</span>
+    <span id="boot-progress-label">LOADING</span>
   </div>
 </div>
 
@@ -281,59 +301,6 @@ Type <span style="color:#9090dd">'help'</span> for commands.
 
 </div>
 <script src="script.js"></script>
-<script>
-(function(){
-  function tick(){
-    var el=document.getElementById('boot-time-footer');
-    if(el)el.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  }
-  tick();setInterval(tick,1000);
 
-  var hc=document.createElement('canvas');
-  hc.style.cssText='position:absolute;inset:0;width:100%;height:100%;';
-  var hexDiv=document.getElementById('boot-hex');
-  if(hexDiv){hexDiv.insertBefore(hc,hexDiv.firstChild);}
-
-  function drawHexFrame(){
-    var W=hexDiv?hexDiv.offsetWidth:180;
-    var H=hexDiv?hexDiv.offsetHeight:180;
-    hc.width=W;hc.height=H;
-    var ctx=hc.getContext('2d');
-    var cx=W/2,cy=H/2,angle=0,speed=0.012;
-    var radii=[W*0.48,W*0.35,W*0.22];
-    var colors=['rgba(83,74,183,0.7)','rgba(127,119,221,0.5)','rgba(159,153,238,0.35)'];
-    var widths=[1.5,1,0.8];
-    var dirs=[1,-1.4,0.8];
-
-    function frame(){
-      ctx.clearRect(0,0,W,H);
-      angle+=speed;
-      for(var ri=0;ri<radii.length;ri++){
-        var r=radii[ri],rot=angle*dirs[ri];
-        ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);
-        ctx.beginPath();
-        for(var i=0;i<6;i++){
-          var a=(Math.PI/3)*i;
-          if(i===0)ctx.moveTo(r*Math.cos(a),r*Math.sin(a));
-          else ctx.lineTo(r*Math.cos(a),r*Math.sin(a));
-        }
-        ctx.closePath();
-        ctx.strokeStyle=colors[ri];ctx.lineWidth=widths[ri];ctx.stroke();
-        ctx.restore();
-      }
-      for(var pi=0;pi<3;pi++){
-        var pa=(Math.PI*2/3)*pi+angle*2.5;
-        var pr=radii[0]*0.6;
-        ctx.beginPath();ctx.arc(cx+Math.cos(pa)*pr,cy+Math.sin(pa)*pr,2.5,0,Math.PI*2);
-        ctx.fillStyle='rgba(159,153,238,0.8)';ctx.fill();
-      }
-      requestAnimationFrame(frame);
-    }
-    frame();
-  }
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',drawHexFrame);}
-  else{drawHexFrame();}
-})();
-</script>
 </body>
 </html>
