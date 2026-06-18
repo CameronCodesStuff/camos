@@ -37,89 +37,103 @@ var BOOT_STEPS=['BIOS v2.40 -- UEFI Firmware','Detecting CPU: 0x'+Math.floor(Mat
 function initEdexBoot() {
   var canvas = document.getElementById('boot-canvas');
   if (!canvas) return;
-  var ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-
+  var ctx = canvas.getContext('2d');
   var W = canvas.width, H = canvas.height;
-  var cols = Math.floor(W / 14);
+
+  var cols = Math.floor(W / 16);
   var drops = [];
-  for (var i = 0; i < cols; i++) drops[i] = Math.random() * -50;
+  for (var i = 0; i < cols; i++) drops[i] = -(Math.random() * 40);
 
-  var chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノABCDEF0123456789';
+  var chars = '01アイウカキクタチツナニABCDEF0123456789></-+';
 
-  function drawMatrix() {
-    ctx.fillStyle = 'rgba(0,0,0,0.04)';
+  function drawFrame() {
+    ctx.fillStyle = 'rgba(0,0,6,0.18)';
     ctx.fillRect(0, 0, W, H);
+
+    ctx.font = '12px monospace';
     for (var i = 0; i < drops.length; i++) {
-      var ch = chars[Math.floor(Math.random() * chars.length)];
-      var brightness = Math.random();
-      if (brightness > 0.97) {
-        ctx.fillStyle = '#ffffff';
-      } else if (brightness > 0.85) {
-        ctx.fillStyle = '#9F99EE';
-      } else {
-        ctx.fillStyle = 'rgba(83,74,183,'+(0.3+Math.random()*0.4)+')';
-      }
-      ctx.font = '13px monospace';
-      ctx.fillText(ch, i * 14, drops[i] * 14);
-      if (drops[i] * 14 > H && Math.random() > 0.975) drops[i] = 0;
-      drops[i] += 0.5;
+      var y = drops[i] * 16;
+      if (y < 0) { drops[i] += 0.4; continue; }
+      var rnd = Math.random();
+      if (rnd > 0.98) ctx.fillStyle = '#ffffff';
+      else if (rnd > 0.9) ctx.fillStyle = 'rgba(159,153,238,0.9)';
+      else if (rnd > 0.6) ctx.fillStyle = 'rgba(83,74,183,0.55)';
+      else ctx.fillStyle = 'rgba(83,74,183,0.18)';
+      ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 16, y);
+      if (y > H && Math.random() > 0.972) drops[i] = 0;
+      drops[i] += 0.45;
     }
-  }
 
-  var matrixAnim = setInterval(drawMatrix, 33);
-
-  var centerX = W/2, centerY = H/2;
-  var hexRadius = Math.min(W, H) * 0.22;
-  var hexAngle = 0;
-
-  function drawHex(x, y, r, color, lineWidth, rotation) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rotation);
-    ctx.beginPath();
-    for (var i = 0; i < 6; i++) {
-      var a = (Math.PI / 3) * i;
-      if (i === 0) ctx.moveTo(r * Math.cos(a), r * Math.sin(a));
-      else ctx.lineTo(r * Math.cos(a), r * Math.sin(a));
-    }
-    ctx.closePath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  var overlayAnim = setInterval(function() {
-    hexAngle += 0.008;
-    drawHex(centerX, centerY, hexRadius, 'rgba(127,119,221,0.5)', 1.5, hexAngle);
-    drawHex(centerX, centerY, hexRadius * 0.7, 'rgba(83,74,183,0.4)', 1, -hexAngle * 1.3);
-    drawHex(centerX, centerY, hexRadius * 0.45, 'rgba(159,153,238,0.3)', 0.8, hexAngle * 0.7);
-
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(hexAngle * 2);
-    for (var i = 0; i < 3; i++) {
-      var a = (Math.PI * 2 / 3) * i + hexAngle * 3;
-      var rx = Math.cos(a) * hexRadius * 0.55;
-      var ry = Math.sin(a) * hexRadius * 0.55;
+    var cx = W / 2, cy = H / 2;
+    var now = Date.now() / 1000;
+    var rings = [
+      {r:Math.min(W,H)*0.28, speed:0.4, lw:1.5, color:'rgba(127,119,221,0.55)'},
+      {r:Math.min(W,H)*0.20, speed:-0.6, lw:1.0, color:'rgba(83,74,183,0.45)'},
+      {r:Math.min(W,H)*0.13, speed:0.9, lw:0.7, color:'rgba(159,153,238,0.35)'}
+    ];
+    rings.forEach(function(ring) {
+      var angle = now * ring.speed;
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle);
       ctx.beginPath();
-      ctx.arc(rx, ry, 3, 0, Math.PI * 2);
-      ctx.fillStyle = '#9F99EE';
+      for (var i = 0; i < 6; i++) {
+        var a = (Math.PI / 3) * i;
+        if (i===0) ctx.moveTo(ring.r*Math.cos(a), ring.r*Math.sin(a));
+        else ctx.lineTo(ring.r*Math.cos(a), ring.r*Math.sin(a));
+      }
+      ctx.closePath();
+      ctx.strokeStyle = ring.color;
+      ctx.lineWidth = ring.lw;
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    for (var pi = 0; pi < 3; pi++) {
+      var pa = (Math.PI * 2 / 3) * pi + now * 1.2;
+      var pr = Math.min(W,H) * 0.205;
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(pa)*pr, cy + Math.sin(pa)*pr, 2.5, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(159,153,238,0.85)';
       ctx.fill();
     }
-    ctx.restore();
-  }, 33);
 
-  window._bootAnims = {matrix: matrixAnim, overlay: overlayAnim};
+    var bw = 220, bh = 3;
+    var bx = cx - bw/2, by = cy + Math.min(W,H)*0.32;
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillRect(bx, by, bw, bh);
+    var prog = Math.min(1, bootIdx / 10);
+    var grad = ctx.createLinearGradient(bx, 0, bx+bw, 0);
+    grad.addColorStop(0, 'rgba(60,52,160,0.9)');
+    grad.addColorStop(1, 'rgba(159,153,238,0.9)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(bx, by, bw * prog, bh);
+
+    var corner = 20;
+    ctx.strokeStyle = 'rgba(83,74,183,0.5)';
+    ctx.lineWidth = 1.5;
+    [[0,0,1,1],[W,0,-1,1],[0,H,1,-1],[W,H,-1,-1]].forEach(function(c) {
+      ctx.beginPath();
+      ctx.moveTo(c[0]+c[2]*corner, c[1]);
+      ctx.lineTo(c[0], c[1]);
+      ctx.lineTo(c[0], c[1]+c[3]*corner);
+      ctx.stroke();
+    });
+
+    ctx.strokeStyle = 'rgba(83,74,183,0.2)';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(40, 40, W-80, H-80);
+  }
+
+  var animId;
+  function loop() { drawFrame(); animId = requestAnimationFrame(loop); }
+  loop();
+  window._bootAnims = {animId: animId, loop: loop};
+  window._stopBootAnim = function() { cancelAnimationFrame(animId); };
 }
 
 function stopEdexBoot() {
-  if (window._bootAnims) {
-    clearInterval(window._bootAnims.matrix);
-    clearInterval(window._bootAnims.overlay);
-  }
+  if (window._stopBootAnim) window._stopBootAnim();
 }
 
 function bootStep() {
@@ -140,6 +154,12 @@ function bootStep() {
   var progress = Math.round((bootIdx+1) / BOOT_STEPS.length * 100);
   if (fill) fill.style.width = progress + '%';
   if (pct) pct.textContent = progress + '%';
+  var sl = document.getElementById('boot-status-line');
+  if (sl) sl.textContent = s.toUpperCase();
+  var bl = document.getElementById('boot-bar-label');
+  if (bl) bl.textContent = ['BIOS POST','MEM CHECK','VFS MOUNT','KERNEL','NET','WM','ENV','DESKTOP','READY','DONE'][Math.min(bootIdx,9)]||'LOADING';
+  var pl = document.getElementById('boot-progress-label');
+  if (pl) pl.textContent = progress + '% COMPLETE';
   if (log) {
     var line = document.createElement('div');
     line.className = 'blog';
@@ -383,10 +403,10 @@ function brShow(which){
 
 async function brNavTo(url,skipHistory){
   if(!url)return;
-  if(!url.startsWith('http')&&(url.indexOf(' ')>-1||url.indexOf('.')===-1)){
-    url='https://search.brave.com/search?q='+encodeURIComponent(url);
-  }
-  if(!url.startsWith('http://') && !url.startsWith('https://'))url='https://'+url;
+  url=url.trim();
+  var isSearch=!url.startsWith('http')&&(url.indexOf(' ')>-1||(!url.match(/\.\w{2,}/)));
+  if(isSearch){url='https://lite.duckduckgo.com/lite/?q='+encodeURIComponent(url);}
+  else if(!url.startsWith('http://') && !url.startsWith('https://'))url='https://'+url;
   var t=brTabs[brCurTab];
   if(t&&!skipHistory){t.hist=t.hist.slice(0,t.hidx+1);t.hist.push(url);t.hidx=t.hist.length-1;t.url=url;}
   else if(t){t.url=url;}
@@ -416,12 +436,14 @@ async function brNavTo(url,skipHistory){
 function brInjectHTML(html,baseUrl,silent){
   var tm=html.match(/<title[^>]*>([^<]{0,120})<\/title>/i);
   var title=tm?tm[1].trim().replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>'):baseUrl;
-  html=html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi,function(m){
-    if(m.indexOf('history.')>-1||m.indexOf('replaceState')>-1||m.indexOf('pushState')>-1)return'';
+  html=html.replace(/<script\b[^>]*src=[^>]*><\/script>/gi,'');
+  html=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,function(m){
+    if(m.indexOf('history.')>-1||m.indexOf('replaceState')>-1||m.indexOf('pushState')>-1||m.indexOf('window.top')>-1||m.indexOf('window.parent')>-1)return'';
+    if(m.length>8000)return'';
     return m;
   });
-  var intercept='<script>document.addEventListener("click",function(e){var a=e.target.closest("a");if(a&&a.href&&a.href.indexOf("javascript")<0&&a.href.indexOf("#")!==0){e.preventDefault();e.stopPropagation();try{window.top.brGo(a.href);}catch(x){}}});<\/script>';
-  var styles='<style>*{max-width:100%;box-sizing:border-box}body{font-family:system-ui;overflow-x:hidden}img{max-width:100%;height:auto}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:#333;border-radius:3px}<\/style>';
+  var intercept='<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("a[href]");if(!a)return;var h=a.getAttribute("href");if(!h||h.charAt(0)==="#"||h.indexOf("javascript")===0)return;e.preventDefault();e.stopPropagation();try{window.top.brGo(a.href||h);}catch(x){}});})();<\/script>';
+  var styles='<style>html,body{max-width:100%!important}*{box-sizing:border-box}body{font-family:system-ui,sans-serif;overflow-x:hidden}img{max-width:100%!important;height:auto}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#f0f0f0}::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}a{cursor:pointer}<\/style>';
   var inject='<base href="'+baseUrl+'">'+styles+intercept;
   if(html.indexOf('<head')>-1){html=html.replace(/<head([^>]*)>/i,function(m){return m+inject;});}
   else{html='<head>'+inject+'</head>'+html;}
@@ -442,9 +464,11 @@ function brShowErr(url){
 
 function brGo(url){
   var u=url;
-  if(!u){var el=$br('br-url');u=el?el.value.trim():'';}
+  if(u===undefined||u===null){var el=$br('br-url');u=el?el.value.trim():'';}
+  if(typeof u!=='string')u=String(u);
+  u=u.trim();
   if(!u)return;
-  if(!brTabs.length)newBrTab(u);
+  if(!brTabs.length){newBrTab();brNavTo(u);}
   else brNavTo(u);
 }
 function brBack(){var t=brTabs[brCurTab];if(!t||t.hidx<=0)return;t.hidx--;brNavTo(t.hist[t.hidx],true);}
@@ -514,7 +538,7 @@ function siPoll(){
 function openApp(id){
   var win=document.getElementById('win-'+id),tb=document.getElementById('tb-'+id);
   if(!win||!tb)return;
-  win.classList.add('open');tb.classList.add('open');focusApp(id);
+  win.style.display='';win.classList.add('open');tb.classList.add('open');focusApp(id);
   if(id==='sysinfo')fillSysInfo();
   if(id==='terminal'){var ti=document.getElementById('t-in');if(ti)ti.focus();}
   if(id==='notepad')npUpdate();
@@ -522,13 +546,13 @@ function openApp(id){
 }
 function closeApp(id){
   var win=document.getElementById('win-'+id),tb=document.getElementById('tb-'+id);
-  if(win)win.classList.remove('open');
+  if(win){win.classList.remove('open');win.style.display='';}
   if(tb)tb.classList.remove('open','focused');
   maxed[id]=false;
 }
 function minApp(id){
   var win=document.getElementById('win-'+id),tb=document.getElementById('tb-'+id);
-  if(win)win.classList.remove('open');
+  if(win){win.classList.remove('open');win.style.display='';}
   if(tb)tb.classList.remove('focused');
 }
 function maxApp(id){
@@ -547,7 +571,7 @@ function maxApp(id){
 function focusApp(id){
   zTop++;
   var win=document.getElementById('win-'+id);if(!win)return;
-  win.style.zIndex=zTop;win.style.display='flex';win.classList.add('open');
+  win.style.zIndex=zTop;win.classList.add('open');
   document.querySelectorAll('.tb-app').forEach(function(el){el.classList.remove('focused');});
   var tb=document.getElementById('tb-'+id);if(tb)tb.classList.add('focused');
 }
@@ -609,6 +633,15 @@ function closeModal(val){
 
 document.addEventListener('DOMContentLoaded',function(){
   initEdexBoot();
+  var cpuEl=document.getElementById('boot-cpu-val');
+  if(cpuEl)cpuEl.textContent='0x'+Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase();
+  var biosDateEl=document.getElementById('boot-bios-date');
+  if(biosDateEl)biosDateEl.textContent=new Date().toLocaleDateString([],{year:'numeric',month:'2-digit',day:'2-digit'});
+  (function bootClock(){
+    var el=document.getElementById('boot-time-footer');
+    if(el)el.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    setTimeout(bootClock,1000);
+  })();
   setTimeout(bootStep,800);
 
   document.getElementById('login-go').addEventListener('click',doLogin);
