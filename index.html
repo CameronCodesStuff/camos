@@ -9,30 +9,25 @@
 </head>
 <body>
 
-<!-- ═══════ BOOT ═══════ -->
+<!-- BOOT -->
 <div id="boot">
   <canvas id="boot-canvas"></canvas>
   <div id="boot-scanlines"></div>
   <div id="boot-vignette"></div>
   <div id="boot-content">
     <div id="boot-ring">
-      <div class="ring ring-1"></div>
-      <div class="ring ring-2"></div>
-      <div class="ring ring-3"></div>
+      <div class="ring ring-1"></div><div class="ring ring-2"></div><div class="ring ring-3"></div>
       <div id="boot-icon-wrap"><i class="ti ti-device-desktop"></i></div>
     </div>
     <div id="boot-logo-text">CamOS</div>
     <div id="boot-ver">version 3.0 &middot; browser edition</div>
     <div id="boot-bar-track"><div id="boot-bar-fill"></div></div>
     <div id="boot-msg">Initializing...</div>
-    <div id="boot-log-box">
-      <div id="boot-log-fade"></div>
-      <div id="boot-log"></div>
-    </div>
+    <div id="boot-log-box"><div id="boot-log-fade"></div><div id="boot-log"></div></div>
   </div>
 </div>
 
-<!-- ═══════ LOGIN ═══════ -->
+<!-- LOGIN -->
 <div id="login">
   <div id="login-bg"></div>
   <div id="login-card">
@@ -48,7 +43,7 @@
   <div id="login-hint">hint: press enter or type 1234</div>
 </div>
 
-<!-- ═══════ DESKTOP ═══════ -->
+<!-- DESKTOP -->
 <div id="desktop">
   <canvas id="desktop-canvas"></canvas>
 
@@ -65,7 +60,7 @@
     <i class="ti ti-cpu"></i><span>System</span>
   </div>
 
-  <!-- ─── TERMINAL ─── -->
+  <!-- TERMINAL -->
   <div class="win" id="win-terminal" style="width:540px;height:340px;top:80px;left:120px">
     <div class="win-bar" id="drag-terminal">
       <div class="wbtns">
@@ -88,8 +83,8 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
-  <!-- ─── BROWSER ─── -->
-  <div class="win" id="win-browser" style="width:740px;height:520px;top:50px;left:150px">
+  <!-- BROWSER -->
+  <div class="win" id="win-browser" style="width:760px;height:540px;top:40px;left:140px">
     <div class="win-bar" id="drag-browser">
       <div class="wbtns">
         <div class="wb cl" onclick="closeApp('browser')" title="Close"></div>
@@ -99,78 +94,90 @@ Type <span style="color:#9090dd">'help'</span> for commands.
       <div class="win-ttl"><i class="ti ti-world"></i><span id="br-win-title">Browser</span></div>
     </div>
     <div class="win-body">
-      <!-- Tab bar -->
+
+      <!-- Tab strip — horizontal, side by side -->
       <div id="br-tabs">
         <div id="br-tabs-inner"></div>
         <button id="br-new-tab" onclick="newBrTab()" title="New tab">+</button>
       </div>
+
       <!-- Address bar -->
       <div id="br-bar">
         <div class="br-btn" onclick="brBack()"     title="Back"><i class="ti ti-arrow-left"></i></div>
         <div class="br-btn" onclick="brFwd()"      title="Forward"><i class="ti ti-arrow-right"></i></div>
         <div class="br-btn" onclick="brReload()"   title="Reload"><i class="ti ti-refresh"></i></div>
         <div class="br-btn" onclick="brHome()"     title="Home"><i class="ti ti-home"></i></div>
-        <input id="br-url" placeholder="Search or type a URL...">
-        <div class="br-btn" onclick="brGo()"       title="Go" style="color:#7F77DD"><i class="ti ti-corner-down-left"></i></div>
+        <span id="br-security"></span>
+        <input id="br-url" placeholder="Search or enter a URL..." autocomplete="off" spellcheck="false">
+        <div class="br-btn accent" onclick="brGo()" title="Go"><i class="ti ti-corner-down-left"></i></div>
+        <div class="br-btn" onclick="brDlPage()"   title="Download page"><i class="ti ti-download"></i></div>
         <div class="br-btn" onclick="brBookmark()" title="Bookmark"><i class="ti ti-bookmark"></i></div>
+        <div class="br-btn" onclick="window.open(brTabs[brCurTab]&&brTabs[brCurTab].url,'_blank','noopener')" title="Open in real browser"><i class="ti ti-external-link"></i></div>
       </div>
-      <!-- Content area — ALL elements present in DOM from page load -->
+
+      <!-- Content area — ALL panels always in DOM -->
       <div id="br-content">
-        <!-- Loading spinner -->
+
+        <!-- Loading -->
         <div id="br-loading">
           <div id="br-spinner"></div>
-          <span>Loading...</span>
+          <span id="br-loading-msg">Connecting...</span>
         </div>
-        <!-- Error screen -->
+
+        <!-- Error -->
         <div id="br-err">
           <i class="ti ti-world-off"></i>
-          <div id="br-err-title">Cannot load page</div>
-          <div id="br-err-msg">Could not fetch this page via any proxy.</div>
-          <a id="br-err-link" href="#" target="_blank" rel="noopener">
-            <i class="ti ti-external-link"></i> Open in real browser
-          </a>
-        </div>
-        <!-- Home page -->
-        <div id="br-home">
-          <div id="br-home-logo">CamOS Browser</div>
-          <div id="br-home-grid">
-            <div class="br-tile" onclick="brGo('https://en.wikipedia.org')">
-              <i class="ti ti-books"></i><span>Wikipedia</span>
-            </div>
-            <div class="br-tile" onclick="brGo('https://github.com')">
-              <i class="ti ti-brand-github"></i><span>GitHub</span>
-            </div>
-            <div class="br-tile" onclick="brGo('https://developer.mozilla.org')">
-              <i class="ti ti-file-code"></i><span>MDN Docs</span>
-            </div>
-            <div class="br-tile" onclick="brGo('https://news.ycombinator.com')">
-              <i class="ti ti-news"></i><span>HackerNews</span>
-            </div>
-            <div class="br-tile" onclick="brGo('https://old.reddit.com')">
-              <i class="ti ti-brand-reddit"></i><span>Reddit</span>
-            </div>
-            <div class="br-tile" onclick="brGo('https://stackoverflow.com')">
-              <i class="ti ti-stack-2"></i><span>Stack Overflow</span>
-            </div>
-            <div class="br-tile" onclick="brGo('https://archive.org')">
-              <i class="ti ti-archive"></i><span>Archive.org</span>
-            </div>
-            <div class="br-tile" onclick="brGo('https://www.openstreetmap.org')">
-              <i class="ti ti-map"></i><span>OpenStreetMap</span>
-            </div>
+          <h3>Cannot load page</h3>
+          <p id="br-err-detail">All proxies failed for this URL.</p>
+          <div class="br-err-actions">
+            <button class="br-err-btn primary" onclick="brOpenExt()"><i class="ti ti-external-link"></i>Open in browser</button>
+            <button class="br-err-btn" onclick="brDlFromErr()"><i class="ti ti-download"></i>Try download</button>
+            <button class="br-err-btn" onclick="brHome()"><i class="ti ti-home"></i>Home</button>
           </div>
-          <div id="br-home-hint">
-            Pages are fetched via CORS proxies so most sites load.<br>
-            Type any URL above or click a tile to browse.
-          </div>
+          <a id="br-open-ext" href="#" target="_blank" rel="noopener" style="display:none"></a>
+          <span id="br-dl-link" data-url=""></span>
         </div>
-        <!-- Iframe for fetched pages -->
-        <iframe id="br-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Browser content"></iframe>
-      </div>
-    </div>
-  </div>
 
-  <!-- ─── NOTEPAD ─── -->
+        <!-- Home page -->
+        <div id="br-home" class="vis">
+          <div id="br-home-logo">CamOS Browser</div>
+          <div id="br-home-sub">v3.0 &middot; PROXY ENGINE</div>
+          <div id="br-home-search">
+            <input id="br-search-inp" placeholder="Search with Brave or enter a URL..." autocomplete="off"
+              onkeydown="if(event.key==='Enter'){brGo(this.value);this.value='';}">
+            <button id="br-search-btn" onclick="brGo(document.getElementById('br-search-inp').value)">Go</button>
+          </div>
+          <div id="br-home-grid">
+            <div class="br-tile" onclick="brGo('https://en.wikipedia.org')"><i class="ti ti-books"></i><span>Wikipedia</span></div>
+            <div class="br-tile" onclick="brGo('https://github.com')"><i class="ti ti-brand-github"></i><span>GitHub</span></div>
+            <div class="br-tile" onclick="brGo('https://developer.mozilla.org')"><i class="ti ti-file-code"></i><span>MDN</span></div>
+            <div class="br-tile" onclick="brGo('https://news.ycombinator.com')"><i class="ti ti-news"></i><span>Hacker News</span></div>
+            <div class="br-tile" onclick="brGo('https://old.reddit.com')"><i class="ti ti-brand-reddit"></i><span>Reddit</span></div>
+            <div class="br-tile" onclick="brGo('https://search.brave.com')"><i class="ti ti-search"></i><span>Brave Search</span></div>
+            <div class="br-tile" onclick="brGo('https://archive.org')"><i class="ti ti-archive"></i><span>Archive.org</span></div>
+            <div class="br-tile" onclick="brGo('https://www.openstreetmap.org')"><i class="ti ti-map"></i><span>OpenStreetMap</span></div>
+          </div>
+        </div>
+
+        <!-- Iframe — only shown when content is loaded -->
+        <iframe id="br-iframe"
+          sandbox="allow-scripts allow-forms allow-popups"
+          title="Browser content"></iframe>
+
+        <!-- Download panel — slides up from bottom -->
+        <div id="dl-panel">
+          <div id="dl-panel-hdr">
+            <span><i class="ti ti-download" style="font-size:12px;margin-right:5px"></i>Downloads</span>
+            <span id="dl-close" onclick="brHideDlPanel()"><i class="ti ti-x"></i></span>
+          </div>
+          <div id="dl-list"></div>
+        </div>
+
+      </div><!-- /br-content -->
+    </div><!-- /win-body -->
+  </div><!-- /win-browser -->
+
+  <!-- NOTEPAD -->
   <div class="win" id="win-notepad" style="width:460px;height:360px;top:120px;left:210px">
     <div class="win-bar" id="drag-notepad">
       <div class="wbtns">
@@ -199,7 +206,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
-  <!-- ─── SYSINFO ─── -->
+  <!-- SYSINFO -->
   <div class="win" id="win-sysinfo" style="width:360px;height:360px;top:100px;left:380px">
     <div class="win-bar" id="drag-sysinfo">
       <div class="wbtns">
@@ -213,7 +220,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
       <div id="si-body">
         <div class="si-sec">
           <h3>System</h3>
-          <div class="si-row"><span class="si-k">OS</span><span class="si-v">CamOS 3.0 Browser Edition</span></div>
+          <div class="si-row"><span class="si-k">OS</span><span class="si-v">CamOS 3.0</span></div>
           <div class="si-row"><span class="si-k">Kernel</span><span class="si-v">HTML5 / JS Runtime</span></div>
           <div class="si-row"><span class="si-k">Shell</span><span class="si-v">camsh 3.0</span></div>
           <div class="si-row"><span class="si-k">User</span><span class="si-v">cameron</span></div>
@@ -227,7 +234,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
           <div class="si-row"><span class="si-k">Resolution</span><span class="si-v" id="si-res">...</span></div>
           <div style="margin-top:10px">
             <div style="display:flex;justify-content:space-between;font-size:10px;color:#333;margin-bottom:5px">
-              <span>CPU Load</span><span id="si-cpu-pct">—</span>
+              <span>CPU Load</span><span id="si-cpu-pct">--</span>
             </div>
             <div id="si-cpu-bar"><div id="si-cpu-fill"></div></div>
           </div>
@@ -242,7 +249,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
-  <!-- ─── TASKBAR ─── -->
+  <!-- TASKBAR -->
   <div id="taskbar">
     <button id="start-btn" onclick="toggleMenu()">&#x229E; Start</button>
     <div class="tb-sep"></div>
@@ -250,18 +257,12 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     <div class="tb-app" id="tb-browser"  onclick="tbClick('browser')"><i class="ti ti-world"></i>Browser</div>
     <div class="tb-app" id="tb-notepad"  onclick="tbClick('notepad')"><i class="ti ti-file-text"></i>Notepad</div>
     <div class="tb-app" id="tb-sysinfo"  onclick="tbClick('sysinfo')"><i class="ti ti-cpu"></i>System</div>
-    <div id="tb-right">
-      <div id="tb-date"></div>
-      <div id="tb-clock"></div>
-    </div>
+    <div id="tb-right"><div id="tb-date"></div><div id="tb-clock"></div></div>
   </div>
 
-  <!-- ─── START MENU ─── -->
+  <!-- START MENU -->
   <div id="smenu">
-    <div class="sm-head">
-      <div class="sm-av">C</div>
-      <div><div class="sm-un">Cameron</div><div class="sm-st">Local Account</div></div>
-    </div>
+    <div class="sm-head"><div class="sm-av">C</div><div><div class="sm-un">Cameron</div><div class="sm-st">Local Account</div></div></div>
     <div class="sm-sec">Apps</div>
     <div class="sm-it" onclick="openApp('terminal');closeMenu()"><i class="ti ti-terminal"></i>Terminal</div>
     <div class="sm-it" onclick="openApp('browser');closeMenu()"><i class="ti ti-world"></i>Browser</div>
@@ -273,7 +274,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     <div class="sm-it danger" onclick="doLogout()"><i class="ti ti-logout"></i>Sign Out</div>
   </div>
 
-  <!-- ─── CONTEXT MENU ─── -->
+  <!-- CONTEXT MENU -->
   <div id="ctxmenu">
     <div class="ctx-it" onclick="changeWallpaper();hideCtx()"><i class="ti ti-palette"></i>Change Wallpaper</div>
     <div class="ctx-sep"></div>
@@ -284,27 +285,23 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     <div class="ctx-it" onclick="showNotif('info','CamOS v3.0 Browser Edition');hideCtx()"><i class="ti ti-info-circle"></i>About CamOS</div>
   </div>
 
-  <!-- ─── NOTIFICATION ─── -->
-  <div id="notif">
-    <div id="notif-title"></div>
-    <div id="notif-body"></div>
-  </div>
+  <!-- NOTIFICATION -->
+  <div id="notif"><div id="notif-title"></div><div id="notif-body"></div></div>
 
-  <!-- ─── MODAL ─── -->
+  <!-- MODAL -->
   <div id="modal-overlay">
     <div id="modal-box">
       <h2 id="modal-h">Dialog</h2>
-      <p id="modal-p"></p>
+      <p  id="modal-p"></p>
       <input id="modal-input" type="text" placeholder="">
       <div id="modal-btns">
-        <button class="m-btn no"  onclick="closeModal(null)">Cancel</button>
-        <button class="m-btn ok"  onclick="closeModal(document.getElementById('modal-input').value)">OK</button>
+        <button class="m-btn no" onclick="closeModal(null)">Cancel</button>
+        <button class="m-btn ok" onclick="closeModal(document.getElementById('modal-input').value)">OK</button>
       </div>
     </div>
   </div>
 
 </div><!-- /desktop -->
-
 <script src="script.js"></script>
 </body>
 </html>
