@@ -6,7 +6,7 @@ var appStartTime = Date.now();
    public proxy fallbacks only.
    Example: "https://camos-proxy.yourname.workers.dev"
    ============================================================ */
-var CAMOS_PROXY = "https://camos.detlaffcameron.workers.dev/";
+var CAMOS_PROXY = "";
 
 function workerBase(){return CAMOS_PROXY.replace(/\/$/,'');}
 function P_WORKER(u){return workerBase()+'/?u='+encodeURIComponent(u);}
@@ -393,6 +393,11 @@ function brLoadTab(idx){
   brSetTitle(t.title);
   if(!t.url){brShow('home');brSetUrl('');return;}
   brSetUrl(t.url);
+  if(t.worker&&CAMOS_PROXY){
+    var iframeW=$br('br-iframe');
+    if(iframeW){iframeW.removeAttribute('sandbox');iframeW.removeAttribute('srcdoc');iframeW.src=P_WORKER(t.url);brShow('content');}
+    return;
+  }
   if(t.html)brInjectHTML(t.html,t.url,true);
   else brNavTo(t.url,true);
 }
@@ -473,19 +478,17 @@ function brInjectHTML(html,baseUrl,silent){
   var title=tm?tm[1].trim().replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>'):baseUrl;
 
   if(USING_WORKER){
-    var navHook='<script>(function(){'
-      +'document.addEventListener("click",function(e){'
-      +'var a=e.target.closest&&e.target.closest("a[href]");if(!a)return;'
-      +'var h=a.getAttribute("href");if(!h||h.charAt(0)==="#"||h.indexOf("javascript:")===0)return;'
-      +'if(a.hasAttribute("download"))return;'
-      +'},true);'
-      +'})();<\/script>';
     var iframeW=$br("br-iframe");if(!iframeW)return;
+    // Point the iframe directly at the Worker URL. This gives the page the
+    // Worker's real origin (not null), so history API, module scripts and
+    // relative URLs all behave like a real tab. The Worker already injected
+    // the nav/download hook server-side.
     iframeW.removeAttribute("sandbox");
-    iframeW.srcdoc=html;
+    iframeW.removeAttribute("srcdoc");
+    iframeW.src=P_WORKER(baseUrl);
     brShow("content");
     var tw=brTabs[brCurTab];
-    if(tw){tw.title=title;tw.html=html;tw.url=baseUrl;tw.worker=true;}
+    if(tw){tw.title=title;tw.html='';tw.url=baseUrl;tw.worker=true;}
     brSetTitle(title);brSetUrl(baseUrl);
     return;
   }
