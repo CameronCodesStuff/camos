@@ -6,7 +6,7 @@ var appStartTime = Date.now();
    public proxy fallbacks only.
    Example: "https://camos-proxy.yourname.workers.dev"
    ============================================================ */
-var CAMOS_PROXY = "https://camos.detlaffcameron.workers.dev/";
+var CAMOS_PROXY = "";
 
 function workerBase(){return CAMOS_PROXY.replace(/\/$/,'');}
 function P_WORKER(u){return workerBase()+'/?u='+encodeURIComponent(u);}
@@ -295,8 +295,69 @@ function getNode(path){
   return node;
 }
 function cwdNode(){return getNode(CWD);}
+var CMD_HELP={
+  help:{usage:'help [command]',desc:'Show this help, or details for one command',cat:'Shell'},
+  man:{usage:'man <command>',desc:'Show the manual entry for a command',cat:'Shell'},
+  clear:{usage:'clear',desc:'Clear the terminal screen (alias: cls)',cat:'Shell'},
+  history:{usage:'history',desc:'Show recently entered commands',cat:'Shell'},
+  echo:{usage:'echo <text>',desc:'Print text back to the terminal',cat:'Shell'},
+  ls:{usage:'ls [path]',desc:'List files and folders (alias: ll)',cat:'Files'},
+  cd:{usage:'cd [path]',desc:'Change directory (cd .. to go up, cd ~ for home)',cat:'Files'},
+  pwd:{usage:'pwd',desc:'Print the current working directory',cat:'Files'},
+  cat:{usage:'cat <file>',desc:'Print the contents of a file',cat:'Files'},
+  mkdir:{usage:'mkdir <name>',desc:'Create a new directory',cat:'Files'},
+  touch:{usage:'touch <name>',desc:'Create a new empty file',cat:'Files'},
+  rm:{usage:'rm <name>',desc:'Remove a file or folder',cat:'Files'},
+  tree:{usage:'tree [path]',desc:'Show files as an indented tree',cat:'Files'},
+  open:{usage:'open <app>',desc:'Launch an app: browser, notepad, files, sysinfo',cat:'System'},
+  date:{usage:'date',desc:'Show the current date and time',cat:'System'},
+  uptime:{usage:'uptime',desc:'How long CamOS has been running',cat:'System'},
+  whoami:{usage:'whoami',desc:'Print the current user',cat:'System'},
+  hostname:{usage:'hostname',desc:'Print the system hostname',cat:'System'},
+  uname:{usage:'uname',desc:'Print system information',cat:'System'},
+  neofetch:{usage:'neofetch',desc:'Show a system summary with the CamOS logo',cat:'System'}
+};
+
+function renderHelp(arg){
+  if(arg){
+    var key=arg.toLowerCase();
+    var h=CMD_HELP[key];
+    if(!h)return'<span style="color:#e05d5d">No help for \''+arg+'\'.</span> Type <span style="color:#9090dd">help</span> for the full list.';
+    return '<span style="color:#9F99EE">'+key+'</span> - '+h.desc+'\n  <span style="color:#666">usage:</span> <span style="color:#33ff88">'+h.usage+'</span>';
+  }
+  var cats={};
+  Object.keys(CMD_HELP).forEach(function(k){var c=CMD_HELP[k].cat;(cats[c]=cats[c]||[]).push(k);});
+  var out='<span style="color:#9F99EE">CamOS Shell (camsh 3.0)</span>  -  type <span style="color:#33ff88">help &lt;command&gt;</span> for details\n';
+  ['Shell','Files','System'].forEach(function(cat){
+    if(!cats[cat])return;
+    out+='\n<span style="color:#7F77DD">'+cat+'</span>\n';
+    cats[cat].forEach(function(k){
+      var pad=k+Array(Math.max(0,10-k.length)).join(' ');
+      out+='  <span style="color:#33ff88">'+pad+'</span> <span style="color:#999">'+CMD_HELP[k].desc+'</span>\n';
+    });
+  });
+  out+='\n<span style="color:#666">Tip: use the up/down arrows to repeat commands.</span>';
+  return out;
+}
+
+function fsTree(node,prefix,depth){
+  if(depth>4)return'';
+  var out='',keys=Object.keys(node.children||{});
+  keys.forEach(function(k,i){
+    var child=node.children[k];
+    var last=(i===keys.length-1);
+    var branch=last?'└─ ':'├─ ';
+    var color=child.type==='dir'?'#8888ff':'#33ff88';
+    out+=prefix+branch+'<span style="color:'+color+'">'+k+(child.type==='dir'?'/':'')+'</span>\n';
+    if(child.type==='dir')out+=fsTree(child,prefix+(last?'   ':'│  '),depth+1);
+  });
+  return out;
+}
+
 var CMDS={
-  help:function(){return 'Commands: ls cd pwd cat echo mkdir touch rm clear date whoami uname uptime neofetch';},
+  help:function(a){return renderHelp(a[0]);},
+  man:function(a){if(!a[0])return'What manual page do you want? Try: man ls';return renderHelp(a[0]);},
+  history:function(){if(!HIST.length)return'No history yet.';return HIST.slice().reverse().map(function(c,i){return'  '+(i+1)+'  '+c;}).join('\n');},
   pwd:function(){return CWD;},
   whoami:function(){return 'cameron';},
   hostname:function(){return 'camos';},
@@ -304,7 +365,9 @@ var CMDS={
   date:function(){return new Date().toString();},
   uptime:function(){var s=Math.floor((Date.now()-appStartTime)/1000);return'up '+Math.floor(s/60)+'m '+(s%60)+'s';},
   clear:function(){document.getElementById('t-out').innerHTML='';return null;},
+  open:function(a){var app=(a[0]||'').toLowerCase();var map={browser:'browser',web:'browser',notepad:'notepad',editor:'notepad',files:'files',explorer:'files',sysinfo:'sysinfo',system:'sysinfo'};if(map[app]){openApp(map[app]);return'Opening '+map[app]+'...';}return'open: unknown app \''+(a[0]||'')+'\'. Try: browser, notepad, files, sysinfo';},
   ls:function(a){var path=a[0]?resolvePath(a[0]):CWD,n=getNode(path);if(!n)return'ls: '+a[0]+': No such file or directory';if(n.type!=='dir')return a[0]||path;var it=Object.entries(n.children);if(!it.length)return'';return it.map(function(e){return'<span style="color:'+(e[1].type==='dir'?'#8888ff':'#33ff88')+'">'+e[0]+(e[1].type==='dir'?'/':'')+'</span>';}).join('  ');},
+  tree:function(a){var path=a[0]?resolvePath(a[0]):CWD,n=getNode(path);if(!n)return'tree: '+a[0]+': No such directory';if(n.type!=='dir')return a[0];return'<span style="color:#8888ff">'+(path||'/')+'</span>\n'+fsTree(n,'',0);},
   cd:function(a){var path=resolvePath(a[0]||'~'),n=getNode(path);if(!n)return'cd: '+(a[0]||'')+': No such directory';if(n.type!=='dir')return'cd: '+a[0]+': Not a directory';CWD=path||'/';return'';},
   cat:function(a){if(!a[0])return'cat: missing operand';var n=getNode(resolvePath(a[0]));if(!n)return'cat: '+a[0]+': No such file';if(n.type==='dir')return'cat: '+a[0]+': Is a directory';return n.content;},
   echo:function(a){return a.join(' ');},
@@ -315,10 +378,10 @@ var CMDS={
 };
 function runCmd(line){
   line=line.trim();if(!line)return'';
-  var parts=line.split(/\s+/),cmd=parts[0],args=parts.slice(1);
-  var al={ll:'ls',cls:'clear'};if(al[cmd])cmd=al[cmd];
+  var parts=line.split(/\s+/),cmd=parts[0].toLowerCase(),args=parts.slice(1);
+  var al={ll:'ls',cls:'clear','?':'help'};if(al[cmd])cmd=al[cmd];
   if(CMDS[cmd])return CMDS[cmd](args);
-  return'<span style="color:#e05d5d">'+cmd+': command not found</span>';
+  return'<span style="color:#e05d5d">'+cmd+': command not found.</span> Type <span style="color:#9090dd">help</span> for a list of commands.';
 }
 
 /* ============ BROWSER ============ */
@@ -336,6 +399,7 @@ function absUrl(href,base){
 }
 
 function brDownload(url,filename){
+  url=unwrapProxy(url);
   if(!filename){var p=url.split('/');filename=(p[p.length-1]||'download').split('?')[0]||'download';}
   showNotif('download','Downloading '+filename+'...');
   var entry={url:url,name:filename,status:'fetching',blob:null,size:0};
@@ -439,9 +503,29 @@ function brShow(which){
   var iframe=$br('br-iframe');if(iframe)iframe.style.display=(which==='content')?'block':'none';
 }
 
+function unwrapProxy(url){
+  // If a URL is already a proxied link (worker or public proxy), extract the
+  // real target so we don't double-wrap it into a blank page.
+  if(!url)return url;
+  try{
+    // CamOS worker: .../?u=<encoded>
+    if(CAMOS_PROXY&&url.indexOf(workerBase())===0){
+      var qi=url.indexOf('?u=');
+      if(qi>-1)return decodeURIComponent(url.slice(qi+3));
+    }
+    // corsproxy: ?url=<encoded>
+    var m=url.match(/[?&]url=([^&]+)/);
+    if(m&&/corsproxy\.io|allorigins/.test(url))return decodeURIComponent(m[1]);
+    // codetabs: ?quest=<encoded>
+    var m2=url.match(/[?&]quest=([^&]+)/);
+    if(m2&&/codetabs/.test(url))return decodeURIComponent(m2[1]);
+  }catch(e){}
+  return url;
+}
+
 async function brNavTo(url,skipHistory){
   if(!url)return;
-  url=url.trim();
+  url=unwrapProxy(url.trim());
   var isSearch=!url.startsWith('http')&&(url.indexOf(' ')>-1||!url.match(/\.\w{2,}/));
   if(isSearch)url='https://html.duckduckgo.com/html/?q='+encodeURIComponent(url);
   else if(!url.startsWith('http://')&&!url.startsWith('https://'))url='https://'+url;

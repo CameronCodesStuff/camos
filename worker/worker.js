@@ -194,7 +194,9 @@ function rewriteHtml(html, targetUrl, base) {
     "var ox=window.XMLHttpRequest.prototype.open;" +
     "window.XMLHttpRequest.prototype.open=function(m,u){var args=[].slice.call(arguments);try{args[1]=px(u);}catch(e){}return ox.apply(this,args);};" +
     // neutralize history API (srcdoc can't use it - prevents SecurityError spam)
-    "try{history.replaceState=function(){};history.pushState=function(){};}catch(e){}" +
+    // Wrap history API so cross-origin errors are swallowed but the SPA's
+    // router still gets a working call (prevents YouTube-style blank pages).
+    "try{var _rs=history.replaceState.bind(history);history.replaceState=function(s,t,u){try{return _rs(s,t,u);}catch(e){return;}};var _ps=history.pushState.bind(history);history.pushState=function(s,t,u){try{return _ps(s,t,u);}catch(e){return;}};}catch(e){}" +
     // link clicks -> tell parent to navigate; downloads -> tell parent to download
     "document.addEventListener('click',function(e){" +
     "var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;" +
