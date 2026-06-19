@@ -6,7 +6,7 @@ var appStartTime = Date.now();
    public proxy fallbacks only.
    Example: "https://camos-proxy.yourname.workers.dev"
    ============================================================ */
-var CAMOS_PROXY = "https://camos.detlaffcameron.workers.dev/";
+var CAMOS_PROXY = "";
 
 function workerBase(){return CAMOS_PROXY.replace(/\/$/,'');}
 function P_WORKER(u){return workerBase()+'/?u='+encodeURIComponent(u);}
@@ -508,19 +508,37 @@ function brShow(which){
 }
 
 function unwrapProxy(url){
-  // If a URL is already a proxied link (worker or public proxy), extract the
-  // real target so we don't double-wrap it into a blank page.
+  // If a URL is already a proxied link, extract the real target so we don't
+  // double-wrap it (which produces the Worker's "Proxy is running" banner).
   if(!url)return url;
   try{
-    // CamOS worker: .../?u=<encoded>
     if(CAMOS_PROXY&&url.indexOf(workerBase())===0){
+      // Proper proxied link: worker.dev/?u=<encoded target>
       var qi=url.indexOf('?u=');
-      if(qi>-1)return decodeURIComponent(url.slice(qi+3));
+      if(qi>-1){
+        var enc=url.slice(qi+3);
+        var dec=enc;
+        try{dec=decodeURIComponent(enc);}catch(e){}
+        // guard against accidental double-encoding (?u=https%3A...)
+        if(/^https?%3A/i.test(enc)){try{dec=decodeURIComponent(enc);}catch(e){}}
+        return unwrapProxy(dec);
+      }
+      // A bare worker-origin URL with NO ?u= means a relative SPA navigation
+      // (e.g. youtube pushState to /results?...). Strip the worker origin and
+      // treat the remaining path as living on the CURRENT tab's real site.
+      var rest=url.slice(workerBase().length); // e.g. "/results?search_query=cats"
+      var t=brTabs[brCurTab];
+      if(t&&t.url){
+        try{
+          var base=new URL(t.url);
+          return new URL(rest,base.origin).href;
+        }catch(e){}
+      }
+      // nothing to anchor to: drop it so we don't load the banner
+      return '';
     }
-    // corsproxy: ?url=<encoded>
     var m=url.match(/[?&]url=([^&]+)/);
     if(m&&/corsproxy\.io|allorigins/.test(url))return decodeURIComponent(m[1]);
-    // codetabs: ?quest=<encoded>
     var m2=url.match(/[?&]quest=([^&]+)/);
     if(m2&&/codetabs/.test(url))return decodeURIComponent(m2[1]);
   }catch(e){}
@@ -530,6 +548,7 @@ function unwrapProxy(url){
 async function brNavTo(url,skipHistory){
   if(!url)return;
   url=unwrapProxy(url.trim());
+  if(!url){return;}
   var isSearch=!url.startsWith('http')&&(url.indexOf(' ')>-1||!url.match(/\.\w{2,}/));
   if(isSearch)url='https://html.duckduckgo.com/html/?q='+encodeURIComponent(url);
   else if(!url.startsWith('http://')&&!url.startsWith('https://'))url='https://'+url;

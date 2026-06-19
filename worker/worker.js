@@ -21,7 +21,29 @@ async function handle(request) {
     return new Response(null, { headers: corsHeaders(origin) });
   }
 
-  const target = reqUrl.searchParams.get(PROXY_PARAM);
+  let target = reqUrl.searchParams.get(PROXY_PARAM);
+
+  // No ?u= target. This happens when a proxied page does a RELATIVE
+  // navigation (e.g. a SPA or form posts to "/results?q=cats"), which the
+  // browser resolves against the Worker's own origin. We rebuild the real
+  // URL by taking the path/query here and anchoring it to the real site,
+  // which we recover from the Referer header's ?u= value.
+  if (!target) {
+    const path = reqUrl.pathname + reqUrl.search;
+    if (path && path !== "/") {
+      const ref = request.headers.get("Referer") || "";
+      let realOrigin = null;
+      try {
+        const refUrl = new URL(ref);
+        const refU = refUrl.searchParams.get(PROXY_PARAM);
+        if (refU) realOrigin = new URL(refU).origin;
+      } catch (e) {}
+      if (realOrigin) {
+        try { target = new URL(path, realOrigin).toString(); } catch (e) {}
+      }
+    }
+  }
+
   if (!target) {
     return new Response(
       "CamOS Proxy is running. Usage: ?" + PROXY_PARAM + "=https://example.com",
