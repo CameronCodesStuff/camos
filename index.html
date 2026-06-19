@@ -74,6 +74,7 @@
   <div class="desk-icon" style="top:100px;left:16px" ondblclick="openApp('browser')"><i class="ti ti-world"></i><span>Browser</span></div>
   <div class="desk-icon" style="top:180px;left:16px" ondblclick="openApp('notepad')"><i class="ti ti-file-text"></i><span>Notepad</span></div>
   <div class="desk-icon" style="top:260px;left:16px" ondblclick="openApp('sysinfo')"><i class="ti ti-cpu"></i><span>System</span></div>
+  <div class="desk-icon" style="top:340px;left:16px" ondblclick="openApp('files')"><i class="ti ti-folder"></i><span>Files</span></div>
 
   <!-- TERMINAL -->
   <div class="win" id="win-terminal" style="width:540px;height:340px;top:80px;left:120px">
@@ -204,6 +205,30 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     </div>
   </div>
 
+  <!-- FILE EXPLORER -->
+  <div class="win" id="win-files" style="width:560px;height:400px;top:90px;left:300px">
+    <div class="win-bar" id="drag-files">
+      <div class="wbtns"><div class="wb cl" onclick="closeApp('files')"></div><div class="wb mn" onclick="minApp('files')"></div><div class="wb mx" onclick="maxApp('files')"></div></div>
+      <div class="win-ttl"><i class="ti ti-folder"></i>Files</div>
+    </div>
+    <div class="win-body">
+      <div id="fx-layout">
+        <div id="fx-sidebar">
+          <div class="fx-nav-sec">Locations</div>
+          <div class="fx-nav-item active" data-view="files" onclick="fxRender('files')"><i class="ti ti-files"></i>Documents</div>
+          <div class="fx-nav-item" data-view="downloads" onclick="fxRender('downloads')"><i class="ti ti-download"></i>Downloads</div>
+        </div>
+        <div id="fx-main">
+          <div id="fx-toolbar">
+            <span id="fx-path">/home/cameron/documents</span>
+            <span id="fx-count">0 items</span>
+          </div>
+          <div id="fx-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="taskbar">
     <button id="start-btn" onclick="toggleMenu()">&#x229E; Start</button>
     <div class="tb-sep"></div>
@@ -211,6 +236,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     <div class="tb-app" id="tb-browser" onclick="tbClick('browser')"><i class="ti ti-world"></i>Browser</div>
     <div class="tb-app" id="tb-notepad" onclick="tbClick('notepad')"><i class="ti ti-file-text"></i>Notepad</div>
     <div class="tb-app" id="tb-sysinfo" onclick="tbClick('sysinfo')"><i class="ti ti-cpu"></i>System</div>
+    <div class="tb-app" id="tb-files" onclick="tbClick('files')"><i class="ti ti-folder"></i>Files</div>
     <div id="tb-right"><div id="tb-date"></div><div id="tb-clock"></div></div>
   </div>
 
@@ -221,6 +247,7 @@ Type <span style="color:#9090dd">'help'</span> for commands.
     <div class="sm-it" onclick="openApp('browser');closeMenu()"><i class="ti ti-world"></i>Browser</div>
     <div class="sm-it" onclick="openApp('notepad');closeMenu()"><i class="ti ti-file-text"></i>Notepad</div>
     <div class="sm-it" onclick="openApp('sysinfo');closeMenu()"><i class="ti ti-cpu"></i>System Info</div>
+    <div class="sm-it" onclick="openApp('files');closeMenu()"><i class="ti ti-folder"></i>Files</div>
     <div class="sm-div"></div>
     <div class="sm-it" onclick="changeWallpaper();closeMenu()"><i class="ti ti-palette"></i>Change Wallpaper</div>
     <div class="sm-div"></div>
@@ -238,6 +265,30 @@ Type <span style="color:#9090dd">'help'</span> for commands.
   </div>
 
   <div id="notif"><div id="notif-title"></div><div id="notif-body"></div></div>
+
+  <!-- WALLPAPER PICKER -->
+  <div id="wp-overlay">
+    <div id="wp-box">
+      <div id="wp-header">
+        <h2><i class="ti ti-palette"></i> Wallpaper</h2>
+        <span id="wp-close" onclick="closeWallpaperPicker()"><i class="ti ti-x"></i></span>
+      </div>
+      <div id="wp-grid"></div>
+      <div id="wp-custom">
+        <div class="wp-custom-row">
+          <input id="wp-url-input" type="text" placeholder="Paste an image URL...">
+          <button class="wp-add-btn" onclick="wpAddUrl()"><i class="ti ti-link"></i>Add URL</button>
+        </div>
+        <div class="wp-custom-row">
+          <label class="wp-add-btn wp-upload-btn"><i class="ti ti-upload"></i>Upload Image<input id="wp-upload-input" type="file" accept="image/*" onchange="wpAddUpload(event)" hidden></label>
+          <div class="wp-color-wrap">
+            <input id="wp-color-input" type="color" value="#534AB7">
+            <button class="wp-add-btn" onclick="wpAddColor()"><i class="ti ti-droplet"></i>Add Color</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div id="modal-overlay">
     <div id="modal-box">
