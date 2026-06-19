@@ -54,6 +54,10 @@ var FS = {
 var CWD='/home/cameron', HIST=[], HISTI=-1;
 var zTop=10, maxed={}, savedBounds={};
 var brTabs=[], brCurTab=-1, downloads=[];
+var ceScripts={};
+var CE_STORE_KEY='camos_scripts_v1';
+function ceSaveStore(){try{localStorage.setItem(CE_STORE_KEY,JSON.stringify(ceScripts));}catch(e){}}
+function ceLoadStore(){try{var raw=localStorage.getItem(CE_STORE_KEY);if(raw)ceScripts=JSON.parse(raw)||{};}catch(e){ceScripts={};}}
 var npFiles={}, npCurrent='untitled.txt', npWrap=false;
 var wpIdx=0;
 var WP=[
@@ -759,28 +763,60 @@ function fxRender(which){
       items.push({name:n,type:'doc',size:(content||'').length,content:content});
     });
   }else if(fxView==='downloads'){
+    // Saved CamScript files (persisted) appear here first
+    Object.keys(ceScripts).forEach(function(n){items.push({name:n,type:'script',size:(ceScripts[n]||'').length,content:ceScripts[n]});});
     downloads.forEach(function(d){items.push({name:d.name,type:'download',size:d.size,blob:d.blob,status:d.status});});
   }
   var title=document.getElementById('fx-path');if(title)title.textContent=fxView==='files'?'/home/cameron/documents':'/home/cameron/downloads';
   var count=document.getElementById('fx-count');if(count)count.textContent=items.length+' item'+(items.length===1?'':'s');
   if(!items.length){
     var empty=document.createElement('div');empty.className='fx-empty';
-    empty.innerHTML='<i class="ti '+(fxView==='files'?'ti-file-off':'ti-download')+'"></i><span>'+(fxView==='files'?'No saved files yet. Save one from Notepad.':'No downloads yet. Download something from the Browser.')+'</span>';
+    empty.innerHTML='<i class="ti '+(fxView==='files'?'ti-file-off':'ti-download')+'"></i><span>'+(fxView==='files'?'No saved files yet. Save one from Notepad.':'No downloads yet. Save a script from the Code editor, or download from the Browser.')+'</span>';
     grid.appendChild(empty);
     return;
   }
   items.forEach(function(it){
     var ext=(it.name.split('.').pop()||'').toLowerCase();
-    var icon=it.type==='doc'?'ti-file-text':['mp3','wav','ogg','flac','m4a'].indexOf(ext)>-1?'ti-music':['mp4','webm','mkv','mov'].indexOf(ext)>-1?'ti-video':['jpg','jpeg','png','gif','webp','svg'].indexOf(ext)>-1?'ti-photo':['zip','rar','7z','tar','gz'].indexOf(ext)>-1?'ti-file-zip':['pdf'].indexOf(ext)>-1?'ti-file-type-pdf':'ti-file';
+    var icon=it.type==='script'?'ti-file-code':it.type==='doc'?'ti-file-text':['mp3','wav','ogg','flac','m4a'].indexOf(ext)>-1?'ti-music':['mp4','webm','mkv','mov'].indexOf(ext)>-1?'ti-video':['jpg','jpeg','png','gif','webp','svg'].indexOf(ext)>-1?'ti-photo':['zip','rar','7z','tar','gz'].indexOf(ext)>-1?'ti-file-zip':['pdf'].indexOf(ext)>-1?'ti-file-type-pdf':'ti-file';
     var sz=it.size>(1<<20)?(it.size/(1<<20)).toFixed(1)+' MB':it.size>1024?(it.size>>10)+' KB':((it.size||0)+' B');
-    var tile=document.createElement('div');tile.className='fx-item';
+    var tile=document.createElement('div');tile.className='fx-item'+(it.type==='script'?' fx-script':'');
     tile.innerHTML='<div class="fx-item-icon"><i class="ti '+icon+'"></i></div><div class="fx-item-name">'+it.name+'</div><div class="fx-item-size">'+sz+'</div>';
     tile.addEventListener('dblclick',function(){fxOpen(it);});
+    tile.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();fxShowCtx(e,it);});
     grid.appendChild(tile);
   });
 }
+function fxShowCtx(e,it){
+  var m=document.getElementById('fx-ctxmenu');if(!m)return;
+  m.innerHTML='';
+  var actions=[];
+  if(it.type==='script'){
+    actions.push({label:'Open & Run',icon:'ti-player-play',fn:function(){ceOpenByName(it.name);setTimeout(ceRun,60);}});
+    actions.push({label:'Edit',icon:'ti-pencil',fn:function(){ceOpenByName(it.name);}});
+    actions.push({label:'Delete',icon:'ti-trash',danger:true,fn:function(){delete ceScripts[it.name];ceSaveStore();fxRender();showNotif('info','Deleted '+it.name);}});
+  }else if(it.type==='doc'){
+    actions.push({label:'Open',icon:'ti-folder-open',fn:function(){fxOpen(it);}});
+    actions.push({label:'Edit',icon:'ti-pencil',fn:function(){fxOpen(it);}});
+  }else{
+    actions.push({label:'Open',icon:'ti-folder-open',fn:function(){fxOpen(it);}});
+    actions.push({label:'Save to device',icon:'ti-download',fn:function(){fxOpen(it);}});
+  }
+  actions.forEach(function(a){
+    var item=document.createElement('div');item.className='ctx-it'+(a.danger?' danger':'');
+    item.innerHTML='<i class="ti '+a.icon+'"></i>'+a.label;
+    item.addEventListener('click',function(){a.fn();fxHideCtx();});
+    m.appendChild(item);
+  });
+  var win=document.getElementById('win-files').getBoundingClientRect();
+  m.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+  m.style.top=Math.min(e.clientY,window.innerHeight-160)+'px';
+  m.style.display='block';
+}
+function fxHideCtx(){var m=document.getElementById('fx-ctxmenu');if(m)m.style.display='none';}
 function fxOpen(it){
-  if(it.type==='doc'){
+  if(it.type==='script'){
+    ceOpenByName(it.name);
+  }else if(it.type==='doc'){
     openApp('notepad');
     npCurrent=it.name;
     var ta=document.getElementById('np-ta');if(ta)ta.value=it.content||'';
@@ -794,28 +830,40 @@ function fxOpen(it){
 
 /* ============ CAMSCRIPT CODE EDITOR ============ */
 var ceLoaded=false;
+var ceCurrentName='untitled.cams';
 var CE_SAMPLE=[
   '# Welcome to CamScript!',
-  '# A tiny language made for CamOS.',
-  '# Click Run (or press Ctrl+Enter) to try it.',
+  '# Press Run (or Ctrl+Enter) to try it.',
+  '# Open the Cheatsheet button for the full guide.',
   '',
   'say "Hello, Cameron!"',
   '',
-  '# Variables use let',
+  '# --- Variables & math ---',
   'let name = "world"',
   'say "Hello, " + name',
-  '',
-  '# Math works like you expect',
   'let a = 6',
   'let b = 7',
   'say a * b',
   '',
-  '# Repeat a block N times',
-  'repeat 3 times',
-  '  say "beep"',
+  '# --- Lists ---',
+  'let nums = [3, 1, 4, 1, 5]',
+  'say "sorted: " + sort(nums)',
+  'say "biggest: " + max(9, 2, 7)',
+  '',
+  '# --- Objects ---',
+  'let hero = {name: "Cam", level: 9}',
+  'say hero.name + " is level " + hero.level',
+  '',
+  '# --- Loops ---',
+  'for i = 1 to 3',
+  '  say "line " + i',
   'end',
   '',
-  '# Conditions',
+  'for each fruit in ["apple", "pear", "plum"]',
+  '  say "I like " + fruit',
+  'end',
+  '',
+  '# --- Conditions ---',
   'let score = 85',
   'if score >= 50',
   '  say "You passed!"',
@@ -823,27 +871,23 @@ var CE_SAMPLE=[
   '  say "Try again"',
   'end',
   '',
-  '# Count up with while',
-  'let i = 1',
-  'while i <= 5',
-  '  say "count " + i',
-  '  let i = i + 1',
-  'end',
-  '',
-  '# Functions use: to <name> ... end',
+  '# --- Functions ---',
   'to greet who',
-  '  say "Welcome, " + who',
+  '  return "Welcome, " + who',
   'end',
-  'greet "friend"'
+  'say greet("friend")'
 ].join('\n');
 
 function ceInit(){
-  if(ceLoaded)return;
-  ceLoaded=true;
-  var ta=document.getElementById('ce-code');
-  if(ta&&!ta.value)ta.value=CE_SAMPLE;
-  ceUpdateLines();
+  if(!ceLoaded){
+    ceLoaded=true;
+    var ta=document.getElementById('ce-code');
+    if(ta&&!ta.value)ta.value=CE_SAMPLE;
+    ceUpdateLines();
+  }
+  ceUpdateName();
 }
+function ceUpdateName(){var el=document.getElementById('ce-filename');if(el)el.textContent=ceCurrentName;}
 function ceUpdateLines(){
   var ta=document.getElementById('ce-code'),ln=document.getElementById('ce-lines');
   if(!ta||!ln)return;
@@ -862,7 +906,34 @@ function cePrint(text,cls){
   o.scrollTop=o.scrollHeight;
 }
 function ceToggleHelp(){var p=document.getElementById('ce-help-pane');if(p)p.classList.toggle('open');}
-function ceLoadSample(){var ta=document.getElementById('ce-code');if(ta){ta.value=CE_SAMPLE;ceUpdateLines();ceClear();}}
+function ceLoadSample(){var ta=document.getElementById('ce-code');if(ta){ta.value=CE_SAMPLE;ceCurrentName='example.cams';ceUpdateName();ceUpdateLines();ceClear();}}
+function ceNew(){
+  var ta=document.getElementById('ce-code');if(!ta)return;
+  ta.value='';ceCurrentName='untitled.cams';ceUpdateName();ceUpdateLines();ceClear();
+  showNotif('info','New script');
+}
+function ceSave(){
+  var ta=document.getElementById('ce-code');if(!ta)return;
+  var def=ceCurrentName||'untitled.cams';
+  showModal('Save Script','Save to CamOS Downloads as:',def,function(nm){
+    if(!nm)return;
+    if(!/\.cams$/.test(nm))nm+='.cams';
+    ceCurrentName=nm;
+    ceScripts[nm]=ta.value;
+    ceSaveStore();
+    ceUpdateName();
+    showNotif('download','Saved '+nm+' to Downloads');
+    if(document.getElementById('win-files').classList.contains('open'))fxRender();
+  });
+}
+function ceOpenByName(name){
+  if(!(name in ceScripts))return;
+  openApp('code');
+  var ta=document.getElementById('ce-code');
+  if(ta)ta.value=ceScripts[name];
+  ceCurrentName=name;ceUpdateName();ceUpdateLines();ceClear();
+  showNotif('info','Opened '+name);
+}
 function ceRun(){
   ceClear();
   var ta=document.getElementById('ce-code');if(!ta)return;
@@ -877,20 +948,20 @@ function ceRun(){
   }
 }
 
-/* ---- CamScript interpreter ---- */
-function CamScript(printFn){
+/* ---- CamScript interpreter (v2) ---- */
+function CamScript(printFn,opts){
   this.print=printFn||function(){};
   this.globals={};
   this.funcs={};
   this.steps=0;
+  this.opts=opts||{};
 }
+CamScript.RETURN={};
 CamScript.prototype.run=function(src){
   var rawLines=src.replace(/\r/g,'').split('\n');
-  // Build a list of {text, indent, num}, dropping comments and blanks
   var lines=[];
   for(var i=0;i<rawLines.length;i++){
-    var raw=rawLines[i];
-    var noComment=this.stripComment(raw);
+    var noComment=this.stripComment(rawLines[i]);
     if(noComment.trim()==='')continue;
     lines.push({text:noComment.trim(),num:i+1});
   }
@@ -910,32 +981,29 @@ CamScript.prototype.stripComment=function(line){
 };
 CamScript.prototype.tick=function(num){
   this.steps++;
-  if(this.steps>200000)throw new Error('Program ran too long (possible infinite loop) near line '+num);
+  if(this.steps>500000)throw new Error('Program ran too long (possible infinite loop) near line '+num);
 };
-// Find the matching 'end' for a block opener at index start; returns index of end.
 CamScript.prototype.matchEnd=function(start){
   var depth=0;
   for(var i=start;i<this.lines.length;i++){
-    var t=this.lines[i].text;
-    var first=t.split(/\s+/)[0];
-    if(i!==start&&(first==='if'||first==='repeat'||first==='while'||first==='to'))depth++;
+    var first=this.lines[i].text.split(/\s+/)[0];
+    if(i!==start&&(first==='if'||first==='repeat'||first==='while'||first==='for'||first==='to'||first==='try'))depth++;
     else if(first==='end'){if(depth===0)return i;depth--;}
   }
   throw new Error("Missing 'end' for block starting at line "+this.lines[start].num);
 };
-// Find 'else' at the same depth between start+1 and endIdx, or -1
-CamScript.prototype.findElse=function(start,endIdx){
+CamScript.prototype.findAtDepth=function(start,endIdx,keyword){
   var depth=0;
   for(var i=start+1;i<endIdx;i++){
     var first=this.lines[i].text.split(/\s+/)[0];
-    if(first==='if'||first==='repeat'||first==='while'||first==='to')depth++;
+    if(first==='if'||first==='repeat'||first==='while'||first==='for'||first==='to'||first==='try')depth++;
     else if(first==='end')depth--;
-    else if(first==='else'&&depth===0)return i;
+    else if(first===keyword&&depth===0)return i;
   }
   return -1;
 };
 CamScript.prototype.execBlock=function(from,to,scope,depth){
-  if(depth>200)throw new Error('Too much nesting / recursion');
+  if(depth>300)throw new Error('Too much nesting / recursion');
   var i=from;
   while(i<to){
     var line=this.lines[i];
@@ -943,125 +1011,241 @@ CamScript.prototype.execBlock=function(from,to,scope,depth){
     var t=line.text;
     var first=t.split(/\s+/)[0];
 
-    if(first==='say'){
-      var expr=t.slice(3).trim();
-      var val=this.eval(expr,scope,line.num);
+    if(first==='say'||first==='print'){
+      var val=this.eval(t.slice(first.length).trim(),scope,line.num);
       this.print(this.toStr(val));
       i++;continue;
     }
-    if(first==='let'){
-      var rest=t.slice(3).trim();
+    if(first==='show'){ // show without newline-join; same as say here
+      this.print(this.toStr(this.eval(t.slice(4).trim(),scope,line.num)));
+      i++;continue;
+    }
+    if(first==='wait'){
+      // wait is cooperative: we busy-evaluate nothing (sync interpreter), just validate
+      var ms=this.eval(t.slice(4).trim(),scope,line.num);
+      // In sync mode we cannot truly sleep; record intent (no-op) to keep it beginner-safe
+      i++;continue;
+    }
+    if(first==='let'||first==='set'){
+      var rest=t.slice(first.length).trim();
       var eq=this.splitAssign(rest,line.num);
-      scope[eq.name]=this.eval(eq.expr,scope,line.num);
+      // 'let' on a plain name declares in the current scope; on index/prop it updates
+      var isPlain=/^[a-zA-Z_]\w*$/.test(eq.name.trim());
+      this.assign(eq.name,this.eval(eq.expr,scope,line.num),scope,line.num,first==='let'&&isPlain);
+      i++;continue;
+    }
+    if(first==='change'){ // change x by 5  /  change x to 9
+      var m=t.match(/^change\s+(.+?)\s+(by|to)\s+(.+)$/);
+      if(!m)throw new Error("Use: change x by 1  (or)  change x to 5  (line "+line.num+")");
+      var cur=(m[1] in scope)?scope[m[1]]:this.globals[m[1]];
+      var amt=this.eval(m[3],scope,line.num);
+      this.assign(m[1],m[2]==='by'?(cur+amt):amt,scope,line.num);
       i++;continue;
     }
     if(first==='if'){
       var endIdx=this.matchEnd(i);
-      var elseIdx=this.findElse(i,endIdx);
+      var elseIdx=this.findAtDepth(i,endIdx,'else');
       var cond=this.eval(t.slice(2).trim(),scope,line.num);
-      if(this.truthy(cond)){
-        this.execBlock(i+1,elseIdx>-1?elseIdx:endIdx,scope,depth+1);
-      }else if(elseIdx>-1){
-        this.execBlock(elseIdx+1,endIdx,scope,depth+1);
-      }
+      if(this.truthy(cond))this.execBlock(i+1,elseIdx>-1?elseIdx:endIdx,scope,depth+1);
+      else if(elseIdx>-1)this.execBlock(elseIdx+1,endIdx,scope,depth+1);
       i=endIdx+1;continue;
     }
     if(first==='repeat'){
       var endR=this.matchEnd(i);
-      var m=t.match(/^repeat\s+(.+?)\s+times$/);
-      if(!m)throw new Error("repeat must look like: repeat 3 times (line "+line.num+")");
-      var n=this.eval(m[1],scope,line.num);
-      n=Math.floor(Number(n));
+      var rm=t.match(/^repeat\s+(.+?)\s+times$/);
+      if(!rm)throw new Error("Use: repeat 3 times (line "+line.num+")");
+      var n=Math.floor(Number(this.eval(rm[1],scope,line.num)));
       if(isNaN(n))throw new Error('repeat needs a number (line '+line.num+')');
       for(var r=0;r<n;r++){this.tick(line.num);this.execBlock(i+1,endR,scope,depth+1);}
       i=endR+1;continue;
     }
     if(first==='while'){
       var endW=this.matchEnd(i);
-      var condExpr=t.slice(5).trim();
-      while(this.truthy(this.eval(condExpr,scope,line.num))){
-        this.tick(line.num);
-        this.execBlock(i+1,endW,scope,depth+1);
-      }
+      var cexp=t.slice(5).trim();
+      while(this.truthy(this.eval(cexp,scope,line.num))){this.tick(line.num);this.execBlock(i+1,endW,scope,depth+1);}
       i=endW+1;continue;
+    }
+    if(first==='for'){
+      var endF=this.matchEnd(i);
+      // for each item in list  /  for i = 1 to 10  [step k]
+      var each=t.match(/^for\s+each\s+([a-zA-Z_]\w*)\s+in\s+(.+)$/);
+      var rng=t.match(/^for\s+([a-zA-Z_]\w*)\s*=\s*(.+?)\s+to\s+(.+?)(?:\s+step\s+(.+))?$/);
+      if(each){
+        var coll=this.eval(each[2],scope,line.num);
+        var vn=each[1];
+        if(Array.isArray(coll)){
+          for(var fi=0;fi<coll.length;fi++){this.tick(line.num);var ls=Object.create(scope);ls[vn]=coll[fi];this.execBlock(i+1,endF,ls,depth+1);}
+        }else if(coll&&typeof coll==='object'){
+          var keys=Object.keys(coll);
+          for(var ki=0;ki<keys.length;ki++){this.tick(line.num);var ls2=Object.create(scope);ls2[vn]=keys[ki];this.execBlock(i+1,endF,ls2,depth+1);}
+        }else if(typeof coll==='string'){
+          for(var si=0;si<coll.length;si++){this.tick(line.num);var ls3=Object.create(scope);ls3[vn]=coll[si];this.execBlock(i+1,endF,ls3,depth+1);}
+        }else throw new Error("for each needs a list, text or object (line "+line.num+")");
+      }else if(rng){
+        var vn2=rng[1];
+        var a=Number(this.eval(rng[2],scope,line.num));
+        var b=Number(this.eval(rng[3],scope,line.num));
+        var step=rng[4]?Number(this.eval(rng[4],scope,line.num)):1;
+        if(step===0)throw new Error('step cannot be 0 (line '+line.num+')');
+        if(step>0)for(var v=a;v<=b;v+=step){this.tick(line.num);var lsr=Object.create(scope);lsr[vn2]=v;this.execBlock(i+1,endF,lsr,depth+1);}
+        else for(var v2=a;v2>=b;v2+=step){this.tick(line.num);var lsr2=Object.create(scope);lsr2[vn2]=v2;this.execBlock(i+1,endF,lsr2,depth+1);}
+      }else throw new Error("Use: for each x in list  (or)  for i = 1 to 10 (line "+line.num+")");
+      i=endF+1;continue;
     }
     if(first==='to'){
       var endT=this.matchEnd(i);
       var header=t.slice(2).trim().split(/\s+/);
-      var fname=header[0];
-      var params=header.slice(1);
-      this.funcs[fname]={params:params,from:i+1,to:endT};
+      this.funcs[header[0]]={params:header.slice(1),from:i+1,to:endT};
       i=endT+1;continue;
     }
-    if(first==='end'||first==='else'){i++;continue;}
+    if(first==='return'){
+      var rv=t.slice(6).trim();
+      this.returnValue=rv?this.eval(rv,scope,line.num):null;
+      throw CamScript.RETURN;
+    }
+    if(first==='try'){
+      var endTry=this.matchEnd(i);
+      var catchIdx=this.findAtDepth(i,endTry,'catch');
+      try{
+        this.execBlock(i+1,catchIdx>-1?catchIdx:endTry,scope,depth+1);
+      }catch(err){
+        if(err===CamScript.RETURN)throw err;
+        if(catchIdx>-1){
+          var cm=this.lines[catchIdx].text.match(/^catch\s+([a-zA-Z_]\w*)/);
+          var cs=Object.create(scope);
+          if(cm)cs[cm[1]]=(err&&err.message)?err.message:String(err);
+          this.execBlock(catchIdx+1,endTry,cs,depth+1);
+        }
+      }
+      i=endTry+1;continue;
+    }
+    if(first==='end'||first==='else'||first==='catch'){i++;continue;}
 
-    // Otherwise: maybe a function call like greet "x"
+    // function call as a statement
     var callName=first;
     if(this.funcs[callName]){
       this.callFunc(callName,t.slice(callName.length).trim(),scope,line.num,depth);
       i++;continue;
     }
-    // Or a bare expression (allowed, e.g. just evaluate)
-    if(/^[a-zA-Z_]/.test(t)&&t.indexOf('=')>-1&&t.indexOf('==')<0){
+    // assignment without let:  x = ...  or  list[0] = ...  or  obj.k = ...
+    if(/[a-zA-Z_]/.test(t.charAt(0))&&this.hasTopAssign(t)){
       var as=this.splitAssign(t,line.num);
-      scope[as.name]=this.eval(as.expr,scope,line.num);
+      this.assign(as.name,this.eval(as.expr,scope,line.num),scope,line.num);
       i++;continue;
     }
-    throw new Error("I don't understand '"+t+"' (line "+line.num+")");
+    // bare expression (e.g. a function-style builtin) - evaluate & ignore
+    this.eval(t,scope,line.num);
+    i++;
   }
 };
 CamScript.prototype.callFunc=function(name,argStr,scope,num,depth){
   var fn=this.funcs[name];
   var args=this.parseArgs(argStr,scope,num);
-  var local=Object.create(scope);
+  var local=Object.create(this.globals);
   for(var p=0;p<fn.params.length;p++)local[fn.params[p]]=args[p];
-  this.execBlock(fn.from,fn.to,local,depth+1);
+  this.returnValue=null;
+  try{this.execBlock(fn.from,fn.to,local,depth+1);}
+  catch(e){if(e===CamScript.RETURN)return this.returnValue;throw e;}
+  return this.returnValue;
 };
 CamScript.prototype.parseArgs=function(argStr,scope,num){
-  argStr=argStr.trim();
-  if(!argStr)return [];
-  // split top-level commas
-  var parts=[],cur='',depth=0,inStr=false,q='';
-  for(var i=0;i<argStr.length;i++){
-    var c=argStr[i];
-    if(inStr){cur+=c;if(c===q)inStr=false;continue;}
-    if(c==='"'||c==="'"){inStr=true;q=c;cur+=c;continue;}
-    if(c==='(')depth++;
-    if(c===')')depth--;
-    if(c===','&&depth===0){parts.push(cur);cur='';continue;}
-    cur+=c;
-  }
-  if(cur.trim()!=='')parts.push(cur);
+  argStr=argStr.trim();if(!argStr)return [];
+  var parts=this.splitTop(argStr,',');
   var self=this;
   return parts.map(function(p){return self.eval(p.trim(),scope,num);});
 };
+CamScript.prototype.splitTop=function(s,sep){
+  var parts=[],cur='',depth=0,inStr=false,q='';
+  for(var i=0;i<s.length;i++){
+    var c=s[i];
+    if(inStr){cur+=c;if(c===q)inStr=false;continue;}
+    if(c==='"'||c==="'"){inStr=true;q=c;cur+=c;continue;}
+    if(c==='('||c==='['||c==='{')depth++;
+    if(c===')'||c===']'||c==='}')depth--;
+    if(c===sep&&depth===0){parts.push(cur);cur='';continue;}
+    cur+=c;
+  }
+  if(cur.trim()!=='')parts.push(cur);
+  return parts;
+};
+CamScript.prototype.hasTopAssign=function(s){
+  var depth=0,inStr=false,q='';
+  for(var i=0;i<s.length;i++){
+    var c=s[i];
+    if(inStr){if(c===q)inStr=false;continue;}
+    if(c==='"'||c==="'"){inStr=true;q=c;continue;}
+    if(c==='('||c==='['||c==='{')depth++;
+    if(c===')'||c===']'||c==='}')depth--;
+    if(c==='='&&depth===0){
+      var prev=s[i-1],next=s[i+1];
+      if(prev==='='||prev==='>'||prev==='<'||prev==='!')continue;
+      if(next==='=')continue;
+      return true;
+    }
+  }
+  return false;
+};
 CamScript.prototype.splitAssign=function(rest,num){
-  // find first single '=' not part of ==,>=,<=,!=
+  var depth=0,inStr=false,q='';
   for(var i=0;i<rest.length;i++){
-    if(rest[i]==='='){
+    var c=rest[i];
+    if(inStr){if(c===q)inStr=false;continue;}
+    if(c==='"'||c==="'"){inStr=true;q=c;continue;}
+    if(c==='('||c==='['||c==='{')depth++;
+    if(c===')'||c===']'||c==='}')depth--;
+    if(c==='='&&depth===0){
       var prev=rest[i-1],next=rest[i+1];
       if(prev==='='||prev==='>'||prev==='<'||prev==='!')continue;
       if(next==='=')continue;
-      var name=rest.slice(0,i).trim();
-      var expr=rest.slice(i+1).trim();
-      if(!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name))throw new Error('Bad variable name "'+name+'" (line '+num+')');
-      return {name:name,expr:expr};
+      return {name:rest.slice(0,i).trim(),expr:rest.slice(i+1).trim()};
     }
   }
   throw new Error("Expected '=' in assignment (line "+num+")");
 };
-CamScript.prototype.truthy=function(v){return !(v===false||v===0||v===''||v===null||v===undefined);};
+// assign supports plain names, list[index], obj.key, obj["key"]
+CamScript.prototype.assign=function(target,value,scope,num,declare){
+  target=target.trim();
+  if(/^[a-zA-Z_]\w*$/.test(target)){
+    if(declare){scope[target]=value;return;}
+    // find the scope object that actually owns this name and update it there
+    var s=scope;
+    while(s){
+      if(Object.prototype.hasOwnProperty.call(s,target)){s[target]=value;return;}
+      s=Object.getPrototypeOf(s);
+    }
+    // not found anywhere -> create in current scope
+    scope[target]=value;
+    return;
+  }
+  // index / property assignment
+  var mIdx=target.match(/^(.+)\[(.+)\]$/);
+  if(mIdx){
+    var obj=this.eval(mIdx[1],scope,num);
+    var key=this.eval(mIdx[2],scope,num);
+    if(obj==null)throw new Error('Cannot set index on nothing (line '+num+')');
+    obj[key]=value;return;
+  }
+  var mDot=target.match(/^(.+)\.([a-zA-Z_]\w*)$/);
+  if(mDot){
+    var obj2=this.eval(mDot[1],scope,num);
+    if(obj2==null||typeof obj2!=='object')throw new Error('Cannot set property on that (line '+num+')');
+    obj2[mDot[2]]=value;return;
+  }
+  throw new Error('Cannot assign to "'+target+'" (line '+num+')');
+};
+CamScript.prototype.truthy=function(v){return !(v===false||v===0||v===''||v===null||v===undefined||(Array.isArray(v)&&v.length===0));};
 CamScript.prototype.toStr=function(v){
   if(v===true)return'true';if(v===false)return'false';
   if(v===null||v===undefined)return'nothing';
+  if(Array.isArray(v))return'['+v.map(this.toStr,this).join(', ')+']';
+  if(typeof v==='object'){var self=this;return'{'+Object.keys(v).map(function(k){return k+': '+self.toStr(v[k]);}).join(', ')+'}';}
   return String(v);
 };
-/* Expression evaluator: supports strings, numbers, + - * / %, comparisons,
-   and/or/not, parentheses, variables, and function calls. */
+
+/* Expression evaluator */
 CamScript.prototype.eval=function(expr,scope,num){
   this.exprNum=num;
-  var toks=this.tokenize(expr,num);
-  this.toks=toks;this.pos=0;this.scope=scope;
+  this.toks=this.tokenize(expr,num);this.pos=0;this.scope=scope;
   var v=this.parseOr();
   if(this.pos<this.toks.length)throw new Error("Unexpected '"+this.toks[this.pos].v+"' (line "+num+")");
   return v;
@@ -1071,76 +1255,78 @@ CamScript.prototype.tokenize=function(s,num){
   while(i<s.length){
     var c=s[i];
     if(c===' '||c==='\t'){i++;continue;}
-    if(c==='"'||c==="'"){
-      var q=c,str='';i++;
-      while(i<s.length&&s[i]!==q){str+=s[i];i++;}
-      if(i>=s.length)throw new Error('Unclosed string (line '+num+')');
-      i++;toks.push({t:'str',v:str});continue;
-    }
-    if(/[0-9]/.test(c)||(c==='.'&&/[0-9]/.test(s[i+1]))){
-      var nstr='';while(i<s.length&&/[0-9.]/.test(s[i])){nstr+=s[i];i++;}
-      toks.push({t:'num',v:parseFloat(nstr)});continue;
-    }
-    if(/[a-zA-Z_]/.test(c)){
-      var id='';while(i<s.length&&/[a-zA-Z0-9_]/.test(s[i])){id+=s[i];i++;}
-      toks.push({t:'id',v:id});continue;
-    }
+    if(c==='"'||c==="'"){var q=c,str='';i++;while(i<s.length&&s[i]!==q){if(s[i]==='\\'&&i+1<s.length){var nx=s[i+1];str+=(nx==='n'?'\n':nx==='t'?'\t':nx);i+=2;continue;}str+=s[i];i++;}if(i>=s.length)throw new Error('Unclosed string (line '+num+')');i++;toks.push({t:'str',v:str});continue;}
+    if(/[0-9]/.test(c)||(c==='.'&&/[0-9]/.test(s[i+1]))){var nstr='';while(i<s.length&&/[0-9.]/.test(s[i])){nstr+=s[i];i++;}toks.push({t:'num',v:parseFloat(nstr)});continue;}
+    if(/[a-zA-Z_]/.test(c)){var id='';while(i<s.length&&/[a-zA-Z0-9_]/.test(s[i])){id+=s[i];i++;}toks.push({t:'id',v:id});continue;}
     var two=s.substr(i,2);
     if(two==='=='||two==='!='||two==='>='||two==='<='){toks.push({t:'op',v:two});i+=2;continue;}
-    if('+-*/%()<>'.indexOf(c)>-1){toks.push({t:'op',v:c});i++;continue;}
+    if('+-*/%()<>[]{}.,:'.indexOf(c)>-1){toks.push({t:'op',v:c});i++;continue;}
     throw new Error("Unexpected character '"+c+"' (line "+num+")");
   }
   return toks;
 };
 CamScript.prototype.peek=function(){return this.toks[this.pos];};
 CamScript.prototype.next=function(){return this.toks[this.pos++];};
-CamScript.prototype.parseOr=function(){
-  var left=this.parseAnd();
-  while(this.peek()&&this.peek().t==='id'&&this.peek().v==='or'){this.next();var r=this.parseAnd();left=this.truthy(left)||this.truthy(r);}
-  return left;
-};
-CamScript.prototype.parseAnd=function(){
-  var left=this.parseCmp();
-  while(this.peek()&&this.peek().t==='id'&&this.peek().v==='and'){this.next();var r=this.parseCmp();left=this.truthy(left)&&this.truthy(r);}
-  return left;
-};
+CamScript.prototype.parseOr=function(){var l=this.parseAnd();while(this.peek()&&this.peek().t==='id'&&this.peek().v==='or'){this.next();var r=this.parseAnd();l=this.truthy(l)||this.truthy(r);}return l;};
+CamScript.prototype.parseAnd=function(){var l=this.parseCmp();while(this.peek()&&this.peek().t==='id'&&this.peek().v==='and'){this.next();var r=this.parseCmp();l=this.truthy(l)&&this.truthy(r);}return l;};
 CamScript.prototype.parseCmp=function(){
-  var left=this.parseAdd();
-  while(this.peek()&&this.peek().t==='op'&&['==','!=','>','<','>=','<='].indexOf(this.peek().v)>-1){
-    var op=this.next().v;var r=this.parseAdd();
-    if(op==='==')left=(left===r);
-    else if(op==='!=')left=(left!==r);
-    else if(op==='>')left=(left>r);
-    else if(op==='<')left=(left<r);
-    else if(op==='>=')left=(left>=r);
-    else if(op==='<=')left=(left<=r);
+  var l=this.parseAdd();
+  while(this.peek()&&((this.peek().t==='op'&&['==','!=','>','<','>=','<='].indexOf(this.peek().v)>-1)||(this.peek().t==='id'&&this.peek().v==='is'))){
+    var op=this.next().v;
+    if(op==='is'&&this.peek()&&this.peek().t==='id'&&this.peek().v==='not'){this.next();var rn=this.parseAdd();l=(l!==rn);continue;}
+    if(op==='is'){var ri=this.parseAdd();l=(l===ri);continue;}
+    var r=this.parseAdd();
+    if(op==='==')l=(l===r);else if(op==='!=')l=(l!==r);else if(op==='>')l=(l>r);else if(op==='<')l=(l<r);else if(op==='>=')l=(l>=r);else if(op==='<=')l=(l<=r);
   }
-  return left;
+  return l;
 };
 CamScript.prototype.parseAdd=function(){
-  var left=this.parseMul();
+  var l=this.parseMul();
   while(this.peek()&&this.peek().t==='op'&&(this.peek().v==='+'||this.peek().v==='-')){
     var op=this.next().v;var r=this.parseMul();
-    if(op==='+'){
-      if(typeof left==='string'||typeof r==='string')left=this.toStr(left)+this.toStr(r);
-      else left=left+r;
-    }else left=left-r;
+    if(op==='+'){if(typeof l==='string'||typeof r==='string')l=this.toStr(l)+this.toStr(r);else if(Array.isArray(l)&&Array.isArray(r))l=l.concat(r);else l=l+r;}
+    else l=l-r;
   }
-  return left;
+  return l;
 };
-CamScript.prototype.parseMul=function(){
-  var left=this.parseUnary();
-  while(this.peek()&&this.peek().t==='op'&&(this.peek().v==='*'||this.peek().v==='/'||this.peek().v==='%')){
-    var op=this.next().v;var r=this.parseUnary();
-    if(op==='*')left=left*r;else if(op==='/')left=left/r;else left=left%r;
+CamScript.prototype.parseMul=function(){var l=this.parseUnary();while(this.peek()&&this.peek().t==='op'&&(this.peek().v==='*'||this.peek().v==='/'||this.peek().v==='%')){var op=this.next().v;var r=this.parseUnary();if(op==='*')l=l*r;else if(op==='/')l=l/r;else l=l%r;}return l;};
+CamScript.prototype.parseUnary=function(){var p=this.peek();if(p&&p.t==='op'&&p.v==='-'){this.next();return -this.parseUnary();}if(p&&p.t==='id'&&p.v==='not'){this.next();return !this.truthy(this.parseUnary());}return this.parsePostfix();};
+CamScript.prototype.parsePostfix=function(){
+  var v=this.parsePrimary();
+  while(this.peek()&&this.peek().t==='op'&&(this.peek().v==='['||this.peek().v==='.')){
+    var op=this.next().v;
+    if(op==='['){var idx=this.parseOr();var cc=this.next();if(!cc||cc.v!==']')throw new Error('Missing ] (line '+this.exprNum+')');
+      if(v==null)throw new Error('Cannot index nothing (line '+this.exprNum+')');
+      v=v[idx];
+    }else{ // .
+      var key=this.next();if(!key||key.t!=='id')throw new Error('Expected property name after . (line '+this.exprNum+')');
+      if(v==null)throw new Error('Cannot read property of nothing (line '+this.exprNum+')');
+      v=v[key.v];
+    }
   }
-  return left;
+  return v;
 };
-CamScript.prototype.parseUnary=function(){
-  var p=this.peek();
-  if(p&&p.t==='op'&&p.v==='-'){this.next();return -this.parseUnary();}
-  if(p&&p.t==='id'&&p.v==='not'){this.next();return !this.truthy(this.parseUnary());}
-  return this.parsePrimary();
+CamScript.prototype.BUILTINS={
+  round:function(a){return Math.round(a[0]);},floor:function(a){return Math.floor(a[0]);},ceil:function(a){return Math.ceil(a[0]);},
+  abs:function(a){return Math.abs(a[0]);},sqrt:function(a){return Math.sqrt(a[0]);},pow:function(a){return Math.pow(a[0],a[1]);},
+  min:function(a){return Math.min.apply(null,a);},max:function(a){return Math.max.apply(null,a);},
+  random:function(a){if(a.length===0)return Math.random();if(a.length===1)return Math.floor(Math.random()*a[0]);return Math.floor(Math.random()*(a[1]-a[0]+1))+a[0];},
+  length:function(a){var x=a[0];if(x==null)return 0;if(Array.isArray(x)||typeof x==='string')return x.length;if(typeof x==='object')return Object.keys(x).length;return 0;},
+  upper:function(a){return String(a[0]).toUpperCase();},lower:function(a){return String(a[0]).toLowerCase();},
+  trim:function(a){return String(a[0]).trim();},
+  text:function(a){return this.toStr(a[0]);},number:function(a){return Number(a[0]);},
+  contains:function(a){var c=a[0];if(Array.isArray(c))return c.indexOf(a[1])>-1;return String(c).indexOf(String(a[1]))>-1;},
+  join:function(a){return a[0].join(a.length>1?String(a[1]):',');},
+  split:function(a){return String(a[0]).split(a.length>1?String(a[1]):'');},
+  push:function(a){a[0].push(a[1]);return a[0];},
+  pop:function(a){return a[0].pop();},
+  first:function(a){return a[0][0];},last:function(a){return a[0][a[0].length-1];},
+  reverse:function(a){return a[0].slice().reverse();},
+  sort:function(a){return a[0].slice().sort(function(x,y){return x>y?1:x<y?-1:0;});},
+  range:function(a){var s=a.length>1?a[0]:0,e=a.length>1?a[1]:a[0],out=[];for(var i=s;i<e;i++)out.push(i);return out;},
+  keys:function(a){return Object.keys(a[0]);},
+  has:function(a){return Object.prototype.hasOwnProperty.call(a[0],a[1]);},
+  type:function(a){var x=a[0];if(Array.isArray(x))return'list';if(x===null)return'nothing';return typeof x==='object'?'object':typeof x;}
 };
 CamScript.prototype.parsePrimary=function(){
   var tk=this.next();
@@ -1148,24 +1334,47 @@ CamScript.prototype.parsePrimary=function(){
   if(tk.t==='num')return tk.v;
   if(tk.t==='str')return tk.v;
   if(tk.t==='op'&&tk.v==='('){var v=this.parseOr();var c=this.next();if(!c||c.v!==')')throw new Error('Missing ) (line '+this.exprNum+')');return v;}
+  if(tk.t==='op'&&tk.v==='['){ // list literal
+    var arr=[];
+    if(this.peek()&&this.peek().v===']'){this.next();return arr;}
+    while(true){arr.push(this.parseOr());var n=this.next();if(!n)throw new Error('Missing ] (line '+this.exprNum+')');if(n.v===']')break;if(n.v!==',')throw new Error('Expected , or ] (line '+this.exprNum+')');}
+    return arr;
+  }
+  if(tk.t==='op'&&tk.v==='{'){ // object literal {key: value, ...}
+    var obj={};
+    if(this.peek()&&this.peek().v==='}'){this.next();return obj;}
+    while(true){
+      var kt=this.next();var key;
+      if(kt.t==='id'||kt.t==='str')key=kt.v;else throw new Error('Object key must be a name or text (line '+this.exprNum+')');
+      var colon=this.next();if(!colon||colon.v!==':')throw new Error('Expected : after key (line '+this.exprNum+')');
+      obj[key]=this.parseOr();
+      var nn=this.next();if(!nn)throw new Error('Missing } (line '+this.exprNum+')');if(nn.v==='}')break;if(nn.v!==',')throw new Error('Expected , or } (line '+this.exprNum+')');
+    }
+    return obj;
+  }
   if(tk.t==='id'){
     if(tk.v==='true')return true;
     if(tk.v==='false')return false;
     if(tk.v==='nothing')return null;
-    // builtins
-    if(tk.v==='random'){return Math.random();}
-    if(tk.v==='round'||tk.v==='floor'||tk.v==='ceil'||tk.v==='abs'||tk.v==='length'||tk.v==='upper'||tk.v==='lower'){
-      var open=this.peek();
-      if(open&&open.v==='('){this.next();var arg=this.parseOr();var cc=this.next();if(!cc||cc.v!==')')throw new Error('Missing ) (line '+this.exprNum+')');
-        if(tk.v==='round')return Math.round(arg);
-        if(tk.v==='floor')return Math.floor(arg);
-        if(tk.v==='ceil')return Math.ceil(arg);
-        if(tk.v==='abs')return Math.abs(arg);
-        if(tk.v==='length')return this.toStr(arg).length;
-        if(tk.v==='upper')return this.toStr(arg).toUpperCase();
-        if(tk.v==='lower')return this.toStr(arg).toLowerCase();
+    if(tk.v==='pi')return Math.PI;
+    // builtin or user-function call:  name(args)
+    if(this.peek()&&this.peek().t==='op'&&this.peek().v==='('){
+      this.next();
+      var args=[];
+      if(this.peek()&&this.peek().v===')'){this.next();}
+      else{while(true){args.push(this.parseOr());var a=this.next();if(!a)throw new Error('Missing ) (line '+this.exprNum+')');if(a.v===')')break;if(a.v!==',')throw new Error('Expected , or ) (line '+this.exprNum+')');}}
+      if(this.BUILTINS[tk.v])return this.BUILTINS[tk.v].call(this,args);
+      if(this.funcs[tk.v]){
+        var fn=this.funcs[tk.v];var local=Object.create(this.globals);
+        for(var p=0;p<fn.params.length;p++)local[fn.params[p]]=args[p];
+        this.returnValue=null;
+        try{this.execBlock(fn.from,fn.to,local,1);}catch(e){if(e===CamScript.RETURN)return this.returnValue;throw e;}
+        return this.returnValue;
       }
+      throw new Error("Unknown function '"+tk.v+"' (line "+this.exprNum+")");
     }
+    // builtin used without parens that take no args
+    if(tk.v==='random')return Math.random();
     if(this.scope&&(tk.v in this.scope))return this.scope[tk.v];
     if(tk.v in this.globals)return this.globals[tk.v];
     throw new Error("Unknown name '"+tk.v+"' (line "+this.exprNum+")");
@@ -1288,6 +1497,7 @@ function closeModal(val){var ov=document.getElementById('modal-overlay');if(ov)o
 
 /* ============ INIT ============ */
 document.addEventListener('DOMContentLoaded',function(){
+  ceLoadStore();
   initBootCanvas();
   setTimeout(bootStep,600);
 
@@ -1330,6 +1540,7 @@ document.addEventListener('DOMContentLoaded',function(){
   var desktop=document.getElementById('desktop');
   if(desktop){
     desktop.addEventListener('click',function(e){if(!e.target.closest('#smenu')&&!e.target.closest('#start-btn'))closeMenu();if(!e.target.closest('#ctxmenu'))hideCtx();});
+    document.addEventListener('click',function(e){if(!e.target.closest('#fx-ctxmenu')&&!e.target.closest('.fx-item'))fxHideCtx();});
     desktop.addEventListener('contextmenu',function(e){if(e.target.closest('.win')||e.target.closest('#taskbar'))return;e.preventDefault();var m=document.getElementById('ctxmenu');m.style.left=Math.min(e.clientX,window.innerWidth-190)+'px';m.style.top=Math.min(e.clientY,window.innerHeight-180)+'px';m.style.display='block';});
   }
 

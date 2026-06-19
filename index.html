@@ -239,9 +239,12 @@ Type <span style="color:#9090dd">help</span> for commands, or <span style="color
     <div class="win-body">
       <div id="ce-toolbar">
         <button class="ce-btn run" onclick="ceRun()"><i class="ti ti-player-play"></i>Run</button>
-        <button class="ce-btn" onclick="ceClear()"><i class="ti ti-eraser"></i>Clear Output</button>
-        <button class="ce-btn" onclick="ceLoadSample()"><i class="ti ti-bulb"></i>Load Example</button>
-        <button class="ce-btn" onclick="ceToggleHelp()"><i class="ti ti-help"></i>Cheatsheet</button>
+        <button class="ce-btn" onclick="ceNew()"><i class="ti ti-file-plus"></i>New</button>
+        <button class="ce-btn" onclick="ceSave()"><i class="ti ti-device-floppy"></i>Save</button>
+        <button class="ce-btn" onclick="ceClear()"><i class="ti ti-eraser"></i>Clear</button>
+        <button class="ce-btn" onclick="ceLoadSample()"><i class="ti ti-bulb"></i>Example</button>
+        <button class="ce-btn" onclick="ceToggleHelp()"><i class="ti ti-book"></i>Cheatsheet</button>
+        <span class="ce-filename-wrap"><i class="ti ti-file-code"></i><span id="ce-filename">untitled.cams</span></span>
         <span class="ce-hint">Ctrl+Enter to run</span>
       </div>
       <div id="ce-main">
@@ -250,45 +253,119 @@ Type <span style="color:#9090dd">help</span> for commands, or <span style="color
           <textarea id="ce-code" spellcheck="false" placeholder="Write CamScript here..."></textarea>
         </div>
         <div id="ce-help-pane">
-          <div class="ce-help-title">CamScript Cheatsheet</div>
-          <div class="ce-help-sec">Print</div>
-          <code class="ce-help-code">say "Hello"</code>
-          <div class="ce-help-sec">Variables</div>
-          <code class="ce-help-code">let x = 5
-let name = "Cam"</code>
-          <div class="ce-help-sec">Math</div>
-          <code class="ce-help-code">+ - * / %
-say 2 * (3 + 1)</code>
-          <div class="ce-help-sec">Text join</div>
-          <code class="ce-help-code">say "Hi " + name</code>
-          <div class="ce-help-sec">If / Else</div>
-          <code class="ce-help-code">if x > 10
-  say "big"
+          <div class="ce-help-title"><i class="ti ti-book-2"></i> CamScript Guide</div>
+          <div class="ce-help-intro">CamScript is a beginner language. Indent blocks with two spaces and close them with <b>end</b>. Comments start with <b>#</b>.</div>
+
+          <div class="ce-help-sec">1 &middot; Output</div>
+          <code class="ce-help-code">say "Hello world"
+say 5 + 5
+print "print works too"</code>
+
+          <div class="ce-help-sec">2 &middot; Variables</div>
+          <div class="ce-help-note">Store data to use later.</div>
+          <code class="ce-help-code">let age = 12
+let name = "Cam"
+change age by 1     # now 13
+change age to 20    # now 20</code>
+
+          <div class="ce-help-sec">3 &middot; Data Types</div>
+          <code class="ce-help-code">10          # number
+"hi"        # text
+true false  # boolean
+nothing     # empty
+[1, 2, 3]   # list
+{a: 1}      # object</code>
+
+          <div class="ce-help-sec">4 &middot; Operators</div>
+          <code class="ce-help-code">+  -  *  /  %      # math
+==  !=  &gt;  &lt;  &gt;=  &lt;=   # compare
+and   or   not     # logic
+is   is not        # same as == !=</code>
+
+          <div class="ce-help-sec">5 &middot; Text</div>
+          <code class="ce-help-code">let who = "Cam"
+say "Hi " + who
+say upper("loud")
+say length("hello")   # 5</code>
+
+          <div class="ce-help-sec">6 &middot; Conditions</div>
+          <code class="ce-help-code">if score &gt;= 50
+  say "pass"
 else
-  say "small"
+  say "fail"
 end</code>
-          <div class="ce-help-sec">Repeat</div>
-          <code class="ce-help-code">repeat 3 times
-  say "hi"
-end</code>
-          <div class="ce-help-sec">While</div>
-          <code class="ce-help-code">while x < 5
-  let x = x + 1
-end</code>
-          <div class="ce-help-sec">Functions</div>
-          <code class="ce-help-code">to greet who
-  say "Hi " + who
+
+          <div class="ce-help-sec">7 &middot; Loops</div>
+          <div class="ce-help-note">Count with for, repeat, or while.</div>
+          <code class="ce-help-code">for i = 1 to 5
+  say i
 end
-greet "Cam"</code>
-          <div class="ce-help-sec">Compare</div>
-          <code class="ce-help-code">==  !=  &gt;  &lt;  &gt;=  &lt;=
-and  or  not</code>
-          <div class="ce-help-sec">Built-ins</div>
-          <code class="ce-help-code">round(x) floor(x) ceil(x)
-abs(x) length(s)
-upper(s) lower(s) random</code>
-          <div class="ce-help-sec">Comments</div>
-          <code class="ce-help-code"># this is a comment</code>
+
+for i = 0 to 10 step 2
+  say i
+end
+
+repeat 3 times
+  say "beep"
+end
+
+let n = 0
+while n &lt; 3
+  change n by 1
+end</code>
+
+          <div class="ce-help-sec">8 &middot; Lists</div>
+          <code class="ce-help-code">let xs = [3, 1, 2]
+say xs[0]            # 3
+push(xs, 9)
+say sort(xs)
+say length(xs)
+for each x in xs
+  say x
+end</code>
+
+          <div class="ce-help-sec">9 &middot; Objects</div>
+          <code class="ce-help-code">let p = {name: "Cam", hp: 10}
+say p.name
+p.hp = 8
+say p["hp"]
+for each key in p
+  say key
+end</code>
+
+          <div class="ce-help-sec">10 &middot; Functions</div>
+          <div class="ce-help-note">Reusable blocks. Use return to send a value back.</div>
+          <code class="ce-help-code">to add a b
+  return a + b
+end
+say add(2, 3)     # 5</code>
+
+          <div class="ce-help-sec">11 &middot; Error Handling</div>
+          <code class="ce-help-code">try
+  say risky()
+catch err
+  say "Oops: " + err
+end</code>
+
+          <div class="ce-help-sec">12 &middot; Built-in functions</div>
+          <code class="ce-help-code">round  floor  ceil  abs
+sqrt(x)  pow(a,b)  random(1,6)
+min(...)  max(...)
+length(x)  range(5)
+upper  lower  trim
+text(x)  number(s)
+contains(list, item)
+join(list, "-")  split(s, ",")
+push  pop  first  last
+reverse  sort  keys(obj)
+has(obj, key)  type(x)
+pi</code>
+
+          <div class="ce-help-sec">Tips</div>
+          <code class="ce-help-code"># Save with the Save button -
+# scripts go to Files &gt; Downloads
+# and stay after you refresh.
+# Double-click a script to open it.</code>
         </div>
       </div>
       <div id="ce-console">
@@ -334,6 +411,8 @@ upper(s) lower(s) random</code>
     <div class="ctx-sep"></div>
     <div class="ctx-it" onclick="showNotif('info','CamOS v3.0');hideCtx()"><i class="ti ti-info-circle"></i>About</div>
   </div>
+
+  <div id="fx-ctxmenu"></div>
 
   <div id="notif"><div id="notif-title"></div><div id="notif-body"></div></div>
 

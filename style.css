@@ -315,3 +315,17 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,s
 .ce-out-line{color:#9ff0b8;white-space:pre-wrap;word-break:break-word;}
 .ce-out-line.ce-err{color:#ff8a8a;}
 .ce-out-line.ce-dim{color:#444;}
+
+/* ===== Code editor additions ===== */
+.ce-filename-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:#888;font-family:'Cascadia Code',monospace;padding-left:4px;}
+.ce-filename-wrap i{font-size:12px;color:#7F77DD;}
+.ce-help-intro{font-size:11px;color:#888;line-height:1.6;margin-bottom:14px;}
+.ce-help-intro b{color:#9F99EE;}
+.ce-help-note{font-size:10px;color:#5a5a7a;line-height:1.5;margin:2px 0 5px;}
+.ce-help-sec{position:sticky;top:0;}
+#fx-ctxmenu{position:fixed;background:rgba(10,8,22,0.98);border:0.5px solid rgba(127,119,221,0.2);border-radius:9px;padding:5px;min-width:160px;display:none;z-index:8800;backdrop-filter:blur(24px);box-shadow:0 14px 50px rgba(0,0,0,0.6);}
+#fx-ctxmenu .ctx-it{padding:8px 11px;color:#aaa;font-size:12px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:all 0.1s;}
+#fx-ctxmenu .ctx-it:hover{background:rgba(127,119,221,0.15);color:#fff;}
+#fx-ctxmenu .ctx-it i{color:#7F77DD;font-size:14px;}
+#fx-ctxmenu .ctx-it.danger,#fx-ctxmenu .ctx-it.danger i{color:#e8888a;}
+.fx-item.fx-script .fx-item-icon i{color:#9F99EE;}
