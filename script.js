@@ -132,60 +132,96 @@ function initBootCanvas(){
   function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
   resize(); window.addEventListener('resize',resize);
 
-  // Layered starfield with parallax depth
-  var stars=[];
-  for(var i=0;i<200;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.9+0.1,tw:Math.random()*Math.PI*2});
+  var COL=['159,153,238','127,119,221','83,74,183','200,180,255'];
 
-  // Orbiting energy nodes
-  var orbs=[];
-  for(var k=0;k<7;k++)orbs.push({a:Math.random()*Math.PI*2,r:0.14+k*0.05,sp:(0.0005+Math.random()*0.0009)*(k%2?1:-1),size:1.5+Math.random()*2.5,hue:k%3});
+  // Dense parallax starfield
+  var stars=[];
+  for(var i=0;i<360;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.9+0.1,tw:Math.random()*Math.PI*2});
+
+  // Warp-streak stars shooting outward from center
+  var streaks=[];
+  function spawnStreak(){var a=Math.random()*Math.PI*2;return{a:a,d:Math.random()*0.1,sp:0.004+Math.random()*0.012,len:0.04+Math.random()*0.08};}
+  for(var w=0;w<70;w++)streaks.push(spawnStreak());
 
   // Drifting network particles
   var net=[];
-  for(var n=0;n<34;n++)net.push({x:Math.random(),y:Math.random(),vx:(Math.random()-0.5)*0.0006,vy:(Math.random()-0.5)*0.0006});
+  for(var n=0;n<46;n++)net.push({x:Math.random(),y:Math.random(),vx:(Math.random()-0.5)*0.0009,vy:(Math.random()-0.5)*0.0009});
 
-  // Floating geometric shards
-  var shards=[];
-  for(var s=0;s<9;s++)shards.push({x:Math.random(),y:Math.random(),rot:Math.random()*Math.PI,vr:(Math.random()-0.5)*0.01,size:8+Math.random()*22,sides:3+Math.floor(Math.random()*3),drift:0.0002+Math.random()*0.0003,a:0.04+Math.random()*0.06});
-
-  // Rising energy sparks
+  // Rising sparks
   var sparks=[];
-  for(var sp=0;sp<40;sp++)sparks.push({x:Math.random(),y:Math.random(),speed:0.0008+Math.random()*0.0022,size:Math.random()*1.6+0.4});
+  for(var sp=0;sp<90;sp++)sparks.push({x:Math.random(),y:Math.random(),speed:0.001+Math.random()*0.004,size:Math.random()*2+0.4,hue:Math.floor(Math.random()*4)});
 
-  var COL=['159,153,238','127,119,221','83,74,183'];
+  // Expanding shockwave rings (burst from center, not spinning)
+  var waves=[];
+  function spawnWave(){return{r:0,max:0.55+Math.random()*0.3,sp:0.004+Math.random()*0.004,a:1};}
+  for(var wv=0;wv<3;wv++){var iw=spawnWave();iw.r=Math.random()*iw.max;waves.push(iw);}
+
+  // Lightning bolts that flash occasionally
+  var bolts=[];
+  var nextBolt=0;
+  function makeBolt(W,H){
+    var x0=Math.random()*W, segs=[], y=0, x=x0;
+    while(y<H){y+=20+Math.random()*40;x+=(Math.random()-0.5)*70;segs.push({x:x,y:y});}
+    return{segs:segs,x0:x0,life:1};
+  }
+
+  // Floating glow particles (big soft bokeh)
+  var bokeh=[];
+  for(var bk=0;bk<14;bk++)bokeh.push({x:Math.random(),y:Math.random(),r:30+Math.random()*70,drift:0.0001+Math.random()*0.0003,a:0.03+Math.random()*0.05,hue:Math.floor(Math.random()*4),ph:Math.random()*Math.PI*2});
 
   function frame(){
     var W=canvas.width,H=canvas.height,cx=W/2,cy=H*0.42;
     var t=Date.now()/1000;
     var minWH=Math.min(W,H);
+    var pulse=0.5+0.5*Math.sin(t*2);
 
-    // deep gradient backdrop
+    // shifting nebula backdrop
     ctx.clearRect(0,0,W,H);
-    var bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.85);
-    bg.addColorStop(0,'rgba(48,38,108,0.34)');
-    bg.addColorStop(0.45,'rgba(22,17,52,0.14)');
-    bg.addColorStop(1,'rgba(4,3,12,0)');
+    var hueShift=Math.sin(t*0.3)*20;
+    var bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.9);
+    bg.addColorStop(0,'rgba('+(48+hueShift)+',38,'+(108+hueShift)+',0.42)');
+    bg.addColorStop(0.4,'rgba(26,18,58,0.18)');
+    bg.addColorStop(1,'rgba(3,2,10,0)');
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+    // big soft bokeh glows
+    for(var bi=0;bi<bokeh.length;bi++){
+      var bo=bokeh[bi]; bo.y-=bo.drift; if(bo.y<-0.15)bo.y=1.15;
+      var ba=bo.a*(0.6+0.4*Math.sin(t*1.2+bo.ph));
+      var bx=bo.x*W, by=bo.y*H;
+      var bgrad=ctx.createRadialGradient(bx,by,0,bx,by,bo.r);
+      bgrad.addColorStop(0,'rgba('+COL[bo.hue]+','+ba+')');
+      bgrad.addColorStop(1,'rgba('+COL[bo.hue]+',0)');
+      ctx.fillStyle=bgrad; ctx.beginPath(); ctx.arc(bx,by,bo.r,0,Math.PI*2); ctx.fill();
+    }
 
     // parallax starfield
     for(var i=0;i<stars.length;i++){
-      var st=stars[i];
-      var x=st.x*W, y=st.y*H;
-      var tw=0.35+0.65*Math.abs(Math.sin(t*1.6+st.tw));
-      ctx.beginPath(); ctx.arc(x,y,st.z*1.4,0,Math.PI*2);
-      ctx.fillStyle='rgba(159,153,238,'+(st.z*0.55*tw)+')'; ctx.fill();
-      st.y+=0.00016*st.z; if(st.y>1)st.y=0;
+      var s2=stars[i];
+      var x=s2.x*W, y=s2.y*H;
+      var tw=0.3+0.7*Math.abs(Math.sin(t*1.8+s2.tw));
+      ctx.beginPath(); ctx.arc(x,y,s2.z*1.5,0,Math.PI*2);
+      ctx.fillStyle='rgba(200,196,255,'+(s2.z*0.6*tw)+')'; ctx.fill();
+      s2.y+=0.00018*s2.z; if(s2.y>1)s2.y=0;
     }
 
-    // floating geometric shards (subtle)
-    for(var sh=0;sh<shards.length;sh++){
-      var d=shards[sh]; d.rot+=d.vr; d.y-=d.drift; if(d.y<-0.1)d.y=1.1;
-      var px=d.x*W, py=d.y*H;
-      ctx.save(); ctx.translate(px,py); ctx.rotate(d.rot);
-      ctx.beginPath();
-      for(var v=0;v<=d.sides;v++){var ang=(Math.PI*2/d.sides)*v;if(v===0)ctx.moveTo(Math.cos(ang)*d.size,Math.sin(ang)*d.size);else ctx.lineTo(Math.cos(ang)*d.size,Math.sin(ang)*d.size);}
-      ctx.strokeStyle='rgba(127,119,221,'+d.a+')'; ctx.lineWidth=1; ctx.stroke();
-      ctx.restore();
+    // warp streaks from center
+    for(var ws=0;ws<streaks.length;ws++){
+      var sr=streaks[ws]; sr.d+=sr.sp;
+      var x1=cx+Math.cos(sr.a)*sr.d*minWH, y1=cy+Math.sin(sr.a)*sr.d*minWH;
+      var x2=cx+Math.cos(sr.a)*(sr.d+sr.len)*minWH, y2=cy+Math.sin(sr.a)*(sr.d+sr.len)*minWH;
+      var alpha=Math.min(1,sr.d*3)*0.5;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle='rgba(180,170,255,'+alpha+')'; ctx.lineWidth=1.4; ctx.stroke();
+      if(sr.d>0.75)streaks[ws]=spawnStreak();
+    }
+
+    // expanding shockwaves
+    for(var vi=0;vi<waves.length;vi++){
+      var wa=waves[vi]; wa.r+=wa.sp; wa.a=1-(wa.r/wa.max);
+      if(wa.r>=wa.max){waves[vi]=spawnWave();continue;}
+      ctx.beginPath(); ctx.arc(cx,cy,wa.r*minWH,0,Math.PI*2);
+      ctx.strokeStyle='rgba(159,153,238,'+(wa.a*0.5)+')'; ctx.lineWidth=2*wa.a+0.5; ctx.stroke();
     }
 
     // network particles + links
@@ -195,62 +231,45 @@ function initBootCanvas(){
       for(var b=a+1;b<net.length;b++){
         var q=net[b];
         var dx=(p.x-q.x)*W, dy=(p.y-q.y)*H, dist=Math.sqrt(dx*dx+dy*dy);
-        if(dist<150){
+        if(dist<140){
           ctx.beginPath(); ctx.moveTo(p.x*W,p.y*H); ctx.lineTo(q.x*W,q.y*H);
-          ctx.strokeStyle='rgba(127,119,221,'+((1-dist/150)*0.14)+')'; ctx.lineWidth=0.5; ctx.stroke();
+          ctx.strokeStyle='rgba(127,119,221,'+((1-dist/140)*0.16)+')'; ctx.lineWidth=0.6; ctx.stroke();
         }
       }
-      ctx.beginPath(); ctx.arc(p.x*W,p.y*H,1.3,0,Math.PI*2);
-      ctx.fillStyle='rgba(159,153,238,0.4)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x*W,p.y*H,1.4,0,Math.PI*2);
+      ctx.fillStyle='rgba(159,153,238,0.45)'; ctx.fill();
     }
 
-    // central reactor glow (pulsing)
-    var pulse=0.5+0.5*Math.sin(t*2);
-    var coreR=minWH*(0.05+0.012*pulse);
-    var cg=ctx.createRadialGradient(cx,cy,0,cx,cy,coreR*4);
-    cg.addColorStop(0,'rgba(159,153,238,'+(0.30+0.18*pulse)+')');
-    cg.addColorStop(0.5,'rgba(127,119,221,0.10)');
+    // huge pulsing core
+    var coreR=minWH*(0.06+0.02*pulse);
+    var cg=ctx.createRadialGradient(cx,cy,0,cx,cy,coreR*5);
+    cg.addColorStop(0,'rgba(220,210,255,'+(0.5+0.3*pulse)+')');
+    cg.addColorStop(0.3,'rgba(159,153,238,'+(0.3+0.15*pulse)+')');
+    cg.addColorStop(0.6,'rgba(127,119,221,0.08)');
     cg.addColorStop(1,'rgba(127,119,221,0)');
-    ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(cx,cy,coreR*4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(cx,cy,coreR*5,0,Math.PI*2); ctx.fill();
 
-    // concentric pulsing hex rings
-    for(var ri=0;ri<4;ri++){
-      var rad=minWH*(0.13+ri*0.06)+Math.sin(t*1.5+ri)*4;
-      ctx.save(); ctx.translate(cx,cy); ctx.rotate(t*(0.14*(ri%2?-1:1))+ri);
-      ctx.beginPath();
-      for(var ss=0;ss<=6;ss++){var ang2=(Math.PI*2/6)*ss;if(ss===0)ctx.moveTo(Math.cos(ang2)*rad,Math.sin(ang2)*rad);else ctx.lineTo(Math.cos(ang2)*rad,Math.sin(ang2)*rad);}
-      ctx.closePath();
-      ctx.strokeStyle='rgba(127,119,221,'+(0.16-ri*0.03)+')';
-      ctx.lineWidth=1.2; ctx.stroke();
-      ctx.restore();
+    // lightning flashes
+    if(t>nextBolt){
+      bolts.push(makeBolt(W,H));
+      nextBolt=t+0.6+Math.random()*2.2;
+    }
+    for(var li=bolts.length-1;li>=0;li--){
+      var bl=bolts[li]; bl.life-=0.08;
+      if(bl.life<=0){bolts.splice(li,1);continue;}
+      ctx.beginPath(); ctx.moveTo(bl.x0,0);
+      for(var bs=0;bs<bl.segs.length;bs++)ctx.lineTo(bl.segs[bs].x,bl.segs[bs].y);
+      ctx.strokeStyle='rgba(210,200,255,'+(bl.life*0.5)+')'; ctx.lineWidth=1.5; ctx.stroke();
+      // glow flash
+      if(bl.life>0.85){ctx.fillStyle='rgba(159,153,238,0.04)';ctx.fillRect(0,0,W,H);}
     }
 
-    // sweeping radar beam
-    ctx.save(); ctx.translate(cx,cy);
-    var beamA=t*0.8;
-    var bg2=ctx.createLinearGradient(0,0,Math.cos(beamA)*minWH*0.32,Math.sin(beamA)*minWH*0.32);
-    bg2.addColorStop(0,'rgba(159,153,238,0.25)');
-    bg2.addColorStop(1,'rgba(159,153,238,0)');
-    ctx.strokeStyle=bg2; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(beamA)*minWH*0.32,Math.sin(beamA)*minWH*0.32); ctx.stroke();
-    ctx.restore();
-
-    // orbiting energy nodes with trails
-    for(var o=0;o<orbs.length;o++){
-      var ob=orbs[o]; ob.a+=ob.sp*60;
-      var ox=cx+Math.cos(ob.a)*minWH*ob.r;
-      var oy=cy+Math.sin(ob.a)*minWH*ob.r;
-      var g=ctx.createRadialGradient(ox,oy,0,ox,oy,ob.size*5);
-      g.addColorStop(0,'rgba('+COL[ob.hue]+',0.9)');
-      g.addColorStop(1,'rgba('+COL[ob.hue]+',0)');
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(ox,oy,ob.size*5,0,Math.PI*2); ctx.fill();
-    }
-
-    // rising sparks
+    // rising colourful sparks
     for(var k2=0;k2<sparks.length;k2++){
       var sk=sparks[k2]; sk.y-=sk.speed; if(sk.y<0){sk.y=1;sk.x=Math.random();}
+      var sa=0.5*(1-sk.y)+0.25;
       ctx.beginPath(); ctx.arc(sk.x*W,sk.y*H,sk.size,0,Math.PI*2);
-      ctx.fillStyle='rgba(159,153,238,'+(0.5*(1-sk.y)+0.2)+')'; ctx.fill();
+      ctx.fillStyle='rgba('+COL[sk.hue]+','+sa+')'; ctx.fill();
     }
 
     bootAnimId=requestAnimationFrame(frame);

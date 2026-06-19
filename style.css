@@ -12,11 +12,7 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,s
 #boot-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;}
 #boot-logo{display:flex;flex-direction:column;align-items:center;margin-bottom:34px;}
 #boot-logo-mark{position:relative;width:118px;height:118px;display:flex;align-items:center;justify-content:center;margin-bottom:26px;animation:floaty 3.2s ease-in-out infinite;}
-.blm-ring{position:absolute;border-radius:50%;border:1.5px solid transparent;}
-.blm-ring:nth-child(1){inset:0;border-top-color:#9F99EE;border-right-color:#7F77DD;animation:spin 2s linear infinite;}
-.blm-ring2{inset:14px;border-bottom-color:#7F77DD;border-left-color:#534AB7;animation:spin 1.4s linear infinite reverse;}
-.blm-ring3{inset:28px;border-top-color:#534AB7;border-right-color:#9F99EE;animation:spin 2.8s linear infinite;}
-#boot-logo-core{position:absolute;inset:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7F77DD,#3c34a0);display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(127,119,221,0.7),inset 0 0 16px rgba(255,255,255,0.2);}
+#boot-logo-core{position:absolute;inset:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b9b2ff,#534AB7 55%,#2a2470);display:flex;align-items:center;justify-content:center;box-shadow:0 0 60px rgba(127,119,221,0.85),0 0 120px rgba(127,119,221,0.4),inset 0 0 26px rgba(255,255,255,0.3);}
 #boot-logo-letter{font-size:24px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.3);}
 #boot-logo-text{font-size:38px;font-weight:700;letter-spacing:6px;color:#fff;text-shadow:0 0 50px rgba(127,119,221,0.7),0 2px 20px rgba(0,0,0,0.5);background:linear-gradient(180deg,#fff,#c8c4f0);-webkit-background-clip:text;background-clip:text;}
 #boot-logo-tag{font-size:10px;color:#6a64a0;letter-spacing:3px;margin-top:8px;text-transform:uppercase;}
@@ -333,7 +329,7 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,s
 /* ===== Boot logo extra flair ===== */
 @keyframes bootGlow{0%,100%{text-shadow:0 0 40px rgba(127,119,221,0.6),0 2px 20px rgba(0,0,0,0.5);}50%{text-shadow:0 0 70px rgba(159,153,238,0.95),0 0 30px rgba(127,119,221,0.6),0 2px 20px rgba(0,0,0,0.5);}}
 #boot-logo-text{animation:bootGlow 2.6s ease-in-out infinite;}
-@keyframes corePulse{0%,100%{box-shadow:0 0 40px rgba(127,119,221,0.7),inset 0 0 16px rgba(255,255,255,0.2);}50%{box-shadow:0 0 70px rgba(159,153,238,0.95),0 0 30px rgba(127,119,221,0.5),inset 0 0 22px rgba(255,255,255,0.35);}}
+@keyframes corePulse{0%,100%{box-shadow:0 0 60px rgba(127,119,221,0.85),0 0 120px rgba(127,119,221,0.4),inset 0 0 26px rgba(255,255,255,0.3);}50%{box-shadow:0 0 100px rgba(159,153,238,1),0 0 200px rgba(127,119,221,0.6),inset 0 0 36px rgba(255,255,255,0.5);}}
 #boot-logo-core{animation:corePulse 2.2s ease-in-out infinite;}
 @keyframes tagShimmer{0%,100%{opacity:0.55;}50%{opacity:1;}}
 #boot-logo-tag{animation:tagShimmer 2.6s ease-in-out infinite;}
