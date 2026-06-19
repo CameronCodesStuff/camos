@@ -6,7 +6,7 @@ var appStartTime = Date.now();
    public proxy fallbacks only.
    Example: "https://camos-proxy.yourname.workers.dev"
    ============================================================ */
-var CAMOS_PROXY = "https://camos.detlaffcameron.workers.dev";
+var CAMOS_PROXY = "";
 
 function workerBase(){return CAMOS_PROXY.replace(/\/$/,'');}
 function P_WORKER(u){return workerBase()+'/?u='+encodeURIComponent(u);}
@@ -251,7 +251,7 @@ function doLogin(){
 }
 function doLogout(){
   closeMenu();
-  ['terminal','browser','notepad','sysinfo','files'].forEach(closeApp);
+  ['terminal','browser','notepad','sysinfo','files','code'].forEach(closeApp);
   var d=document.getElementById('desktop');
   d.style.transition='opacity 0.4s'; d.style.opacity='0';
   setTimeout(function(){d.style.display='none';d.style.opacity='1';document.getElementById('login-pw').value='';showLogin();},400);
@@ -739,6 +739,7 @@ function openApp(id){
   if(id==='notepad')npUpdate();
   if(id==='browser'&&!brTabs.length)newBrTab();
   if(id==='files')fxRender('files');
+  if(id==='code')ceInit();
 }
 
 var fxView='files';
@@ -790,6 +791,388 @@ function fxOpen(it){
     else showNotif('error','File not available');
   }
 }
+
+/* ============ CAMSCRIPT CODE EDITOR ============ */
+var ceLoaded=false;
+var CE_SAMPLE=[
+  '# Welcome to CamScript!',
+  '# A tiny language made for CamOS.',
+  '# Click Run (or press Ctrl+Enter) to try it.',
+  '',
+  'say "Hello, Cameron!"',
+  '',
+  '# Variables use let',
+  'let name = "world"',
+  'say "Hello, " + name',
+  '',
+  '# Math works like you expect',
+  'let a = 6',
+  'let b = 7',
+  'say a * b',
+  '',
+  '# Repeat a block N times',
+  'repeat 3 times',
+  '  say "beep"',
+  'end',
+  '',
+  '# Conditions',
+  'let score = 85',
+  'if score >= 50',
+  '  say "You passed!"',
+  'else',
+  '  say "Try again"',
+  'end',
+  '',
+  '# Count up with while',
+  'let i = 1',
+  'while i <= 5',
+  '  say "count " + i',
+  '  let i = i + 1',
+  'end',
+  '',
+  '# Functions use: to <name> ... end',
+  'to greet who',
+  '  say "Welcome, " + who',
+  'end',
+  'greet "friend"'
+].join('\n');
+
+function ceInit(){
+  if(ceLoaded)return;
+  ceLoaded=true;
+  var ta=document.getElementById('ce-code');
+  if(ta&&!ta.value)ta.value=CE_SAMPLE;
+  ceUpdateLines();
+}
+function ceUpdateLines(){
+  var ta=document.getElementById('ce-code'),ln=document.getElementById('ce-lines');
+  if(!ta||!ln)return;
+  var count=ta.value.split('\n').length;
+  var out='';for(var i=1;i<=count;i++)out+=i+'\n';
+  ln.textContent=out;
+  ln.scrollTop=ta.scrollTop;
+}
+function ceClear(){var o=document.getElementById('ce-output');if(o){o.innerHTML='';o.classList.remove('has-error');}}
+function cePrint(text,cls){
+  var o=document.getElementById('ce-output');if(!o)return;
+  var line=document.createElement('div');
+  line.className='ce-out-line'+(cls?' '+cls:'');
+  line.textContent=text;
+  o.appendChild(line);
+  o.scrollTop=o.scrollHeight;
+}
+function ceToggleHelp(){var p=document.getElementById('ce-help-pane');if(p)p.classList.toggle('open');}
+function ceLoadSample(){var ta=document.getElementById('ce-code');if(ta){ta.value=CE_SAMPLE;ceUpdateLines();ceClear();}}
+function ceRun(){
+  ceClear();
+  var ta=document.getElementById('ce-code');if(!ta)return;
+  var src=ta.value;
+  try{
+    var interp=new CamScript(cePrint);
+    interp.run(src);
+    if(!document.getElementById('ce-output').children.length)cePrint('(program finished with no output)','ce-dim');
+  }catch(err){
+    cePrint('Error: '+(err&&err.message?err.message:err),'ce-err');
+    var o=document.getElementById('ce-output');if(o)o.classList.add('has-error');
+  }
+}
+
+/* ---- CamScript interpreter ---- */
+function CamScript(printFn){
+  this.print=printFn||function(){};
+  this.globals={};
+  this.funcs={};
+  this.steps=0;
+}
+CamScript.prototype.run=function(src){
+  var rawLines=src.replace(/\r/g,'').split('\n');
+  // Build a list of {text, indent, num}, dropping comments and blanks
+  var lines=[];
+  for(var i=0;i<rawLines.length;i++){
+    var raw=rawLines[i];
+    var noComment=this.stripComment(raw);
+    if(noComment.trim()==='')continue;
+    lines.push({text:noComment.trim(),num:i+1});
+  }
+  this.lines=lines;
+  this.execBlock(0,lines.length,this.globals,0);
+};
+CamScript.prototype.stripComment=function(line){
+  var out='',inStr=false,q='';
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(inStr){out+=c;if(c===q)inStr=false;continue;}
+    if(c==='"'||c==="'"){inStr=true;q=c;out+=c;continue;}
+    if(c==='#')break;
+    out+=c;
+  }
+  return out;
+};
+CamScript.prototype.tick=function(num){
+  this.steps++;
+  if(this.steps>200000)throw new Error('Program ran too long (possible infinite loop) near line '+num);
+};
+// Find the matching 'end' for a block opener at index start; returns index of end.
+CamScript.prototype.matchEnd=function(start){
+  var depth=0;
+  for(var i=start;i<this.lines.length;i++){
+    var t=this.lines[i].text;
+    var first=t.split(/\s+/)[0];
+    if(i!==start&&(first==='if'||first==='repeat'||first==='while'||first==='to'))depth++;
+    else if(first==='end'){if(depth===0)return i;depth--;}
+  }
+  throw new Error("Missing 'end' for block starting at line "+this.lines[start].num);
+};
+// Find 'else' at the same depth between start+1 and endIdx, or -1
+CamScript.prototype.findElse=function(start,endIdx){
+  var depth=0;
+  for(var i=start+1;i<endIdx;i++){
+    var first=this.lines[i].text.split(/\s+/)[0];
+    if(first==='if'||first==='repeat'||first==='while'||first==='to')depth++;
+    else if(first==='end')depth--;
+    else if(first==='else'&&depth===0)return i;
+  }
+  return -1;
+};
+CamScript.prototype.execBlock=function(from,to,scope,depth){
+  if(depth>200)throw new Error('Too much nesting / recursion');
+  var i=from;
+  while(i<to){
+    var line=this.lines[i];
+    this.tick(line.num);
+    var t=line.text;
+    var first=t.split(/\s+/)[0];
+
+    if(first==='say'){
+      var expr=t.slice(3).trim();
+      var val=this.eval(expr,scope,line.num);
+      this.print(this.toStr(val));
+      i++;continue;
+    }
+    if(first==='let'){
+      var rest=t.slice(3).trim();
+      var eq=this.splitAssign(rest,line.num);
+      scope[eq.name]=this.eval(eq.expr,scope,line.num);
+      i++;continue;
+    }
+    if(first==='if'){
+      var endIdx=this.matchEnd(i);
+      var elseIdx=this.findElse(i,endIdx);
+      var cond=this.eval(t.slice(2).trim(),scope,line.num);
+      if(this.truthy(cond)){
+        this.execBlock(i+1,elseIdx>-1?elseIdx:endIdx,scope,depth+1);
+      }else if(elseIdx>-1){
+        this.execBlock(elseIdx+1,endIdx,scope,depth+1);
+      }
+      i=endIdx+1;continue;
+    }
+    if(first==='repeat'){
+      var endR=this.matchEnd(i);
+      var m=t.match(/^repeat\s+(.+?)\s+times$/);
+      if(!m)throw new Error("repeat must look like: repeat 3 times (line "+line.num+")");
+      var n=this.eval(m[1],scope,line.num);
+      n=Math.floor(Number(n));
+      if(isNaN(n))throw new Error('repeat needs a number (line '+line.num+')');
+      for(var r=0;r<n;r++){this.tick(line.num);this.execBlock(i+1,endR,scope,depth+1);}
+      i=endR+1;continue;
+    }
+    if(first==='while'){
+      var endW=this.matchEnd(i);
+      var condExpr=t.slice(5).trim();
+      while(this.truthy(this.eval(condExpr,scope,line.num))){
+        this.tick(line.num);
+        this.execBlock(i+1,endW,scope,depth+1);
+      }
+      i=endW+1;continue;
+    }
+    if(first==='to'){
+      var endT=this.matchEnd(i);
+      var header=t.slice(2).trim().split(/\s+/);
+      var fname=header[0];
+      var params=header.slice(1);
+      this.funcs[fname]={params:params,from:i+1,to:endT};
+      i=endT+1;continue;
+    }
+    if(first==='end'||first==='else'){i++;continue;}
+
+    // Otherwise: maybe a function call like greet "x"
+    var callName=first;
+    if(this.funcs[callName]){
+      this.callFunc(callName,t.slice(callName.length).trim(),scope,line.num,depth);
+      i++;continue;
+    }
+    // Or a bare expression (allowed, e.g. just evaluate)
+    if(/^[a-zA-Z_]/.test(t)&&t.indexOf('=')>-1&&t.indexOf('==')<0){
+      var as=this.splitAssign(t,line.num);
+      scope[as.name]=this.eval(as.expr,scope,line.num);
+      i++;continue;
+    }
+    throw new Error("I don't understand '"+t+"' (line "+line.num+")");
+  }
+};
+CamScript.prototype.callFunc=function(name,argStr,scope,num,depth){
+  var fn=this.funcs[name];
+  var args=this.parseArgs(argStr,scope,num);
+  var local=Object.create(scope);
+  for(var p=0;p<fn.params.length;p++)local[fn.params[p]]=args[p];
+  this.execBlock(fn.from,fn.to,local,depth+1);
+};
+CamScript.prototype.parseArgs=function(argStr,scope,num){
+  argStr=argStr.trim();
+  if(!argStr)return [];
+  // split top-level commas
+  var parts=[],cur='',depth=0,inStr=false,q='';
+  for(var i=0;i<argStr.length;i++){
+    var c=argStr[i];
+    if(inStr){cur+=c;if(c===q)inStr=false;continue;}
+    if(c==='"'||c==="'"){inStr=true;q=c;cur+=c;continue;}
+    if(c==='(')depth++;
+    if(c===')')depth--;
+    if(c===','&&depth===0){parts.push(cur);cur='';continue;}
+    cur+=c;
+  }
+  if(cur.trim()!=='')parts.push(cur);
+  var self=this;
+  return parts.map(function(p){return self.eval(p.trim(),scope,num);});
+};
+CamScript.prototype.splitAssign=function(rest,num){
+  // find first single '=' not part of ==,>=,<=,!=
+  for(var i=0;i<rest.length;i++){
+    if(rest[i]==='='){
+      var prev=rest[i-1],next=rest[i+1];
+      if(prev==='='||prev==='>'||prev==='<'||prev==='!')continue;
+      if(next==='=')continue;
+      var name=rest.slice(0,i).trim();
+      var expr=rest.slice(i+1).trim();
+      if(!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name))throw new Error('Bad variable name "'+name+'" (line '+num+')');
+      return {name:name,expr:expr};
+    }
+  }
+  throw new Error("Expected '=' in assignment (line "+num+")");
+};
+CamScript.prototype.truthy=function(v){return !(v===false||v===0||v===''||v===null||v===undefined);};
+CamScript.prototype.toStr=function(v){
+  if(v===true)return'true';if(v===false)return'false';
+  if(v===null||v===undefined)return'nothing';
+  return String(v);
+};
+/* Expression evaluator: supports strings, numbers, + - * / %, comparisons,
+   and/or/not, parentheses, variables, and function calls. */
+CamScript.prototype.eval=function(expr,scope,num){
+  this.exprNum=num;
+  var toks=this.tokenize(expr,num);
+  this.toks=toks;this.pos=0;this.scope=scope;
+  var v=this.parseOr();
+  if(this.pos<this.toks.length)throw new Error("Unexpected '"+this.toks[this.pos].v+"' (line "+num+")");
+  return v;
+};
+CamScript.prototype.tokenize=function(s,num){
+  var toks=[],i=0;
+  while(i<s.length){
+    var c=s[i];
+    if(c===' '||c==='\t'){i++;continue;}
+    if(c==='"'||c==="'"){
+      var q=c,str='';i++;
+      while(i<s.length&&s[i]!==q){str+=s[i];i++;}
+      if(i>=s.length)throw new Error('Unclosed string (line '+num+')');
+      i++;toks.push({t:'str',v:str});continue;
+    }
+    if(/[0-9]/.test(c)||(c==='.'&&/[0-9]/.test(s[i+1]))){
+      var nstr='';while(i<s.length&&/[0-9.]/.test(s[i])){nstr+=s[i];i++;}
+      toks.push({t:'num',v:parseFloat(nstr)});continue;
+    }
+    if(/[a-zA-Z_]/.test(c)){
+      var id='';while(i<s.length&&/[a-zA-Z0-9_]/.test(s[i])){id+=s[i];i++;}
+      toks.push({t:'id',v:id});continue;
+    }
+    var two=s.substr(i,2);
+    if(two==='=='||two==='!='||two==='>='||two==='<='){toks.push({t:'op',v:two});i+=2;continue;}
+    if('+-*/%()<>'.indexOf(c)>-1){toks.push({t:'op',v:c});i++;continue;}
+    throw new Error("Unexpected character '"+c+"' (line "+num+")");
+  }
+  return toks;
+};
+CamScript.prototype.peek=function(){return this.toks[this.pos];};
+CamScript.prototype.next=function(){return this.toks[this.pos++];};
+CamScript.prototype.parseOr=function(){
+  var left=this.parseAnd();
+  while(this.peek()&&this.peek().t==='id'&&this.peek().v==='or'){this.next();var r=this.parseAnd();left=this.truthy(left)||this.truthy(r);}
+  return left;
+};
+CamScript.prototype.parseAnd=function(){
+  var left=this.parseCmp();
+  while(this.peek()&&this.peek().t==='id'&&this.peek().v==='and'){this.next();var r=this.parseCmp();left=this.truthy(left)&&this.truthy(r);}
+  return left;
+};
+CamScript.prototype.parseCmp=function(){
+  var left=this.parseAdd();
+  while(this.peek()&&this.peek().t==='op'&&['==','!=','>','<','>=','<='].indexOf(this.peek().v)>-1){
+    var op=this.next().v;var r=this.parseAdd();
+    if(op==='==')left=(left===r);
+    else if(op==='!=')left=(left!==r);
+    else if(op==='>')left=(left>r);
+    else if(op==='<')left=(left<r);
+    else if(op==='>=')left=(left>=r);
+    else if(op==='<=')left=(left<=r);
+  }
+  return left;
+};
+CamScript.prototype.parseAdd=function(){
+  var left=this.parseMul();
+  while(this.peek()&&this.peek().t==='op'&&(this.peek().v==='+'||this.peek().v==='-')){
+    var op=this.next().v;var r=this.parseMul();
+    if(op==='+'){
+      if(typeof left==='string'||typeof r==='string')left=this.toStr(left)+this.toStr(r);
+      else left=left+r;
+    }else left=left-r;
+  }
+  return left;
+};
+CamScript.prototype.parseMul=function(){
+  var left=this.parseUnary();
+  while(this.peek()&&this.peek().t==='op'&&(this.peek().v==='*'||this.peek().v==='/'||this.peek().v==='%')){
+    var op=this.next().v;var r=this.parseUnary();
+    if(op==='*')left=left*r;else if(op==='/')left=left/r;else left=left%r;
+  }
+  return left;
+};
+CamScript.prototype.parseUnary=function(){
+  var p=this.peek();
+  if(p&&p.t==='op'&&p.v==='-'){this.next();return -this.parseUnary();}
+  if(p&&p.t==='id'&&p.v==='not'){this.next();return !this.truthy(this.parseUnary());}
+  return this.parsePrimary();
+};
+CamScript.prototype.parsePrimary=function(){
+  var tk=this.next();
+  if(!tk)throw new Error('Unexpected end of expression (line '+this.exprNum+')');
+  if(tk.t==='num')return tk.v;
+  if(tk.t==='str')return tk.v;
+  if(tk.t==='op'&&tk.v==='('){var v=this.parseOr();var c=this.next();if(!c||c.v!==')')throw new Error('Missing ) (line '+this.exprNum+')');return v;}
+  if(tk.t==='id'){
+    if(tk.v==='true')return true;
+    if(tk.v==='false')return false;
+    if(tk.v==='nothing')return null;
+    // builtins
+    if(tk.v==='random'){return Math.random();}
+    if(tk.v==='round'||tk.v==='floor'||tk.v==='ceil'||tk.v==='abs'||tk.v==='length'||tk.v==='upper'||tk.v==='lower'){
+      var open=this.peek();
+      if(open&&open.v==='('){this.next();var arg=this.parseOr();var cc=this.next();if(!cc||cc.v!==')')throw new Error('Missing ) (line '+this.exprNum+')');
+        if(tk.v==='round')return Math.round(arg);
+        if(tk.v==='floor')return Math.floor(arg);
+        if(tk.v==='ceil')return Math.ceil(arg);
+        if(tk.v==='abs')return Math.abs(arg);
+        if(tk.v==='length')return this.toStr(arg).length;
+        if(tk.v==='upper')return this.toStr(arg).toUpperCase();
+        if(tk.v==='lower')return this.toStr(arg).toLowerCase();
+      }
+    }
+    if(this.scope&&(tk.v in this.scope))return this.scope[tk.v];
+    if(tk.v in this.globals)return this.globals[tk.v];
+    throw new Error("Unknown name '"+tk.v+"' (line "+this.exprNum+")");
+  }
+  throw new Error("Unexpected '"+tk.v+"' (line "+this.exprNum+")");
+};
+
 
 function closeApp(id){var win=document.getElementById('win-'+id),tb=document.getElementById('tb-'+id);if(win){win.classList.remove('open');win.style.display='';}if(tb)tb.classList.remove('open','focused');maxed[id]=false;}
 function minApp(id){var win=document.getElementById('win-'+id),tb=document.getElementById('tb-'+id);if(win){win.classList.remove('open');win.style.display='';}if(tb)tb.classList.remove('focused');}
@@ -932,7 +1315,17 @@ document.addEventListener('DOMContentLoaded',function(){
     npTa.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();var s=this.selectionStart;this.value=this.value.slice(0,s)+'  '+this.value.slice(this.selectionEnd);this.selectionStart=this.selectionEnd=s+2;npUpdate();}});
   }
 
-  ['terminal','browser','notepad','sysinfo','files'].forEach(initDrag);
+  var ceTa=document.getElementById('ce-code');
+  if(ceTa){
+    ceTa.addEventListener('input',ceUpdateLines);
+    ceTa.addEventListener('scroll',function(){var ln=document.getElementById('ce-lines');if(ln)ln.scrollTop=ceTa.scrollTop;});
+    ceTa.addEventListener('keydown',function(e){
+      if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();ceRun();return;}
+      if(e.key==='Tab'){e.preventDefault();var s=this.selectionStart;this.value=this.value.slice(0,s)+'  '+this.value.slice(this.selectionEnd);this.selectionStart=this.selectionEnd=s+2;ceUpdateLines();}
+    });
+  }
+
+  ['terminal','browser','notepad','sysinfo','files','code'].forEach(initDrag);
 
   var desktop=document.getElementById('desktop');
   if(desktop){

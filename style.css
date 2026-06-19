@@ -289,3 +289,29 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,s
 #wp-color-input{width:38px;height:38px;border:none;border-radius:9px;background:transparent;cursor:pointer;padding:0;}
 #wp-color-input::-webkit-color-swatch-wrapper{padding:0;}
 #wp-color-input::-webkit-color-swatch{border:0.5px solid rgba(255,255,255,0.2);border-radius:8px;}
+
+/* ===== CODE EDITOR (CamScript) ===== */
+#ce-toolbar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:rgba(0,0,0,0.25);border-bottom:0.5px solid rgba(255,255,255,0.05);flex-shrink:0;flex-wrap:wrap;}
+.ce-btn{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.08);color:#aaa;padding:5px 11px;border-radius:7px;font-size:12px;cursor:pointer;transition:all 0.12s;white-space:nowrap;}
+.ce-btn:hover{background:rgba(255,255,255,0.1);color:#eee;}
+.ce-btn:active{transform:scale(0.96);}
+.ce-btn i{font-size:13px;}
+.ce-btn.run{background:linear-gradient(135deg,#2f9e54,#3cba66);color:#fff;border-color:transparent;}
+.ce-btn.run:hover{filter:brightness(1.12);}
+.ce-hint{margin-left:auto;font-size:10px;color:#3a3a5a;font-family:monospace;}
+#ce-main{flex:1;display:flex;min-height:0;position:relative;}
+#ce-editor-pane{flex:1;display:flex;min-width:0;background:#070710;overflow:hidden;}
+#ce-lines{flex-shrink:0;width:42px;padding:11px 8px 11px 0;margin:0;text-align:right;color:#33335a;font-family:'Cascadia Code','Fira Code',monospace;font-size:13px;line-height:1.6;background:rgba(0,0,0,0.25);overflow:hidden;user-select:none;white-space:pre;}
+#ce-code{flex:1;background:transparent;border:none;outline:none;color:#d6d6e6;font-family:'Cascadia Code','Fira Code',monospace;font-size:13px;line-height:1.6;padding:11px 12px;resize:none;white-space:pre;overflow:auto;tab-size:2;}
+#ce-help-pane{width:0;overflow:hidden;background:rgba(8,8,18,0.97);border-left:0.5px solid rgba(127,119,221,0.18);transition:width 0.2s ease;flex-shrink:0;}
+#ce-help-pane.open{width:230px;overflow-y:auto;padding:14px;}
+.ce-help-title{font-size:13px;color:#9F99EE;font-weight:600;margin-bottom:12px;}
+.ce-help-sec{font-size:9px;color:#534AB7;letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 4px;}
+.ce-help-code{display:block;background:rgba(0,0,0,0.4);border:0.5px solid rgba(255,255,255,0.06);border-radius:6px;padding:7px 9px;font-family:'Cascadia Code',monospace;font-size:11px;color:#7fd99a;white-space:pre;line-height:1.5;overflow-x:auto;}
+#ce-console{height:150px;flex-shrink:0;display:flex;flex-direction:column;background:#050509;border-top:0.5px solid rgba(255,255,255,0.07);}
+#ce-console-hdr{font-size:10px;color:#534AB7;letter-spacing:1px;padding:6px 12px;border-bottom:0.5px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:6px;flex-shrink:0;text-transform:uppercase;}
+#ce-output{flex:1;overflow-y:auto;padding:9px 12px;font-family:'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.65;}
+#ce-output.has-error{background:rgba(80,20,20,0.08);}
+.ce-out-line{color:#9ff0b8;white-space:pre-wrap;word-break:break-word;}
+.ce-out-line.ce-err{color:#ff8a8a;}
+.ce-out-line.ce-dim{color:#444;}

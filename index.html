@@ -75,6 +75,7 @@
   <div class="desk-icon" style="top:180px;left:16px" ondblclick="openApp('notepad')"><i class="ti ti-file-text"></i><span>Notepad</span></div>
   <div class="desk-icon" style="top:260px;left:16px" ondblclick="openApp('sysinfo')"><i class="ti ti-cpu"></i><span>System</span></div>
   <div class="desk-icon" style="top:340px;left:16px" ondblclick="openApp('files')"><i class="ti ti-folder"></i><span>Files</span></div>
+  <div class="desk-icon" style="top:420px;left:16px" ondblclick="openApp('code')"><i class="ti ti-code"></i><span>Code</span></div>
 
   <!-- TERMINAL -->
   <div class="win" id="win-terminal" style="width:540px;height:340px;top:80px;left:120px">
@@ -229,12 +230,81 @@ Type <span style="color:#9090dd">help</span> for commands, or <span style="color
     </div>
   </div>
 
+  <!-- CODE EDITOR -->
+  <div class="win" id="win-code" style="width:720px;height:500px;top:60px;left:240px">
+    <div class="win-bar" id="drag-code">
+      <div class="wbtns"><div class="wb cl" onclick="closeApp('code')"></div><div class="wb mn" onclick="minApp('code')"></div><div class="wb mx" onclick="maxApp('code')"></div></div>
+      <div class="win-ttl"><i class="ti ti-code"></i>CamScript Editor</div>
+    </div>
+    <div class="win-body">
+      <div id="ce-toolbar">
+        <button class="ce-btn run" onclick="ceRun()"><i class="ti ti-player-play"></i>Run</button>
+        <button class="ce-btn" onclick="ceClear()"><i class="ti ti-eraser"></i>Clear Output</button>
+        <button class="ce-btn" onclick="ceLoadSample()"><i class="ti ti-bulb"></i>Load Example</button>
+        <button class="ce-btn" onclick="ceToggleHelp()"><i class="ti ti-help"></i>Cheatsheet</button>
+        <span class="ce-hint">Ctrl+Enter to run</span>
+      </div>
+      <div id="ce-main">
+        <div id="ce-editor-pane">
+          <pre id="ce-lines">1</pre>
+          <textarea id="ce-code" spellcheck="false" placeholder="Write CamScript here..."></textarea>
+        </div>
+        <div id="ce-help-pane">
+          <div class="ce-help-title">CamScript Cheatsheet</div>
+          <div class="ce-help-sec">Print</div>
+          <code class="ce-help-code">say "Hello"</code>
+          <div class="ce-help-sec">Variables</div>
+          <code class="ce-help-code">let x = 5
+let name = "Cam"</code>
+          <div class="ce-help-sec">Math</div>
+          <code class="ce-help-code">+ - * / %
+say 2 * (3 + 1)</code>
+          <div class="ce-help-sec">Text join</div>
+          <code class="ce-help-code">say "Hi " + name</code>
+          <div class="ce-help-sec">If / Else</div>
+          <code class="ce-help-code">if x > 10
+  say "big"
+else
+  say "small"
+end</code>
+          <div class="ce-help-sec">Repeat</div>
+          <code class="ce-help-code">repeat 3 times
+  say "hi"
+end</code>
+          <div class="ce-help-sec">While</div>
+          <code class="ce-help-code">while x < 5
+  let x = x + 1
+end</code>
+          <div class="ce-help-sec">Functions</div>
+          <code class="ce-help-code">to greet who
+  say "Hi " + who
+end
+greet "Cam"</code>
+          <div class="ce-help-sec">Compare</div>
+          <code class="ce-help-code">==  !=  &gt;  &lt;  &gt;=  &lt;=
+and  or  not</code>
+          <div class="ce-help-sec">Built-ins</div>
+          <code class="ce-help-code">round(x) floor(x) ceil(x)
+abs(x) length(s)
+upper(s) lower(s) random</code>
+          <div class="ce-help-sec">Comments</div>
+          <code class="ce-help-code"># this is a comment</code>
+        </div>
+      </div>
+      <div id="ce-console">
+        <div id="ce-console-hdr"><i class="ti ti-terminal-2"></i> Output</div>
+        <div id="ce-output"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="taskbar">
     <button id="start-btn" onclick="toggleMenu()">&#x229E; Start</button>
     <div class="tb-sep"></div>
     <div class="tb-app" id="tb-terminal" onclick="tbClick('terminal')"><i class="ti ti-terminal"></i>Terminal</div>
     <div class="tb-app" id="tb-browser" onclick="tbClick('browser')"><i class="ti ti-world"></i>Browser</div>
     <div class="tb-app" id="tb-notepad" onclick="tbClick('notepad')"><i class="ti ti-file-text"></i>Notepad</div>
+    <div class="tb-app" id="tb-code" onclick="tbClick('code')"><i class="ti ti-code"></i>Code</div>
     <div class="tb-app" id="tb-sysinfo" onclick="tbClick('sysinfo')"><i class="ti ti-cpu"></i>System</div>
     <div class="tb-app" id="tb-files" onclick="tbClick('files')"><i class="ti ti-folder"></i>Files</div>
     <div id="tb-right"><div id="tb-date"></div><div id="tb-clock"></div></div>
@@ -248,6 +318,7 @@ Type <span style="color:#9090dd">help</span> for commands, or <span style="color
     <div class="sm-it" onclick="openApp('notepad');closeMenu()"><i class="ti ti-file-text"></i>Notepad</div>
     <div class="sm-it" onclick="openApp('sysinfo');closeMenu()"><i class="ti ti-cpu"></i>System Info</div>
     <div class="sm-it" onclick="openApp('files');closeMenu()"><i class="ti ti-folder"></i>Files</div>
+    <div class="sm-it" onclick="openApp('code');closeMenu()"><i class="ti ti-code"></i>CamScript Editor</div>
     <div class="sm-div"></div>
     <div class="sm-it" onclick="changeWallpaper();closeMenu()"><i class="ti ti-palette"></i>Change Wallpaper</div>
     <div class="sm-div"></div>
