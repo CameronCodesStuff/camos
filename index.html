@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CamOS v3.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CamOS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0818">
+<meta name="description" content="A browser-based desktop OS by Cameron.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CamOS">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<link rel="icon" type="image/svg+xml" href="icon-192.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -398,6 +407,7 @@ pi</code>
     <div class="sm-it" onclick="openApp('code');closeMenu()"><i class="ti ti-code"></i>CamScript Editor</div>
     <div class="sm-div"></div>
     <div class="sm-it" onclick="changeWallpaper();closeMenu()"><i class="ti ti-palette"></i>Change Wallpaper</div>
+    <div class="sm-it" id="sm-install" style="display:none" onclick="pwaInstall();closeMenu()"><i class="ti ti-download"></i>Install CamOS</div>
     <div class="sm-div"></div>
     <div class="sm-it danger" onclick="doLogout()"><i class="ti ti-logout"></i>Sign Out</div>
   </div>

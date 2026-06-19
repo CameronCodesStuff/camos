@@ -329,3 +329,11 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,s
 #fx-ctxmenu .ctx-it i{color:#7F77DD;font-size:14px;}
 #fx-ctxmenu .ctx-it.danger,#fx-ctxmenu .ctx-it.danger i{color:#e8888a;}
 .fx-item.fx-script .fx-item-icon i{color:#9F99EE;}
+
+/* ===== Boot logo extra flair ===== */
+@keyframes bootGlow{0%,100%{text-shadow:0 0 40px rgba(127,119,221,0.6),0 2px 20px rgba(0,0,0,0.5);}50%{text-shadow:0 0 70px rgba(159,153,238,0.95),0 0 30px rgba(127,119,221,0.6),0 2px 20px rgba(0,0,0,0.5);}}
+#boot-logo-text{animation:bootGlow 2.6s ease-in-out infinite;}
+@keyframes corePulse{0%,100%{box-shadow:0 0 40px rgba(127,119,221,0.7),inset 0 0 16px rgba(255,255,255,0.2);}50%{box-shadow:0 0 70px rgba(159,153,238,0.95),0 0 30px rgba(127,119,221,0.5),inset 0 0 22px rgba(255,255,255,0.35);}}
+#boot-logo-core{animation:corePulse 2.2s ease-in-out infinite;}
+@keyframes tagShimmer{0%,100%{opacity:0.55;}50%{opacity:1;}}
+#boot-logo-tag{animation:tagShimmer 2.6s ease-in-out infinite;}
