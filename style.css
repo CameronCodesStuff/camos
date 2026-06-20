@@ -5,30 +5,17 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,s
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
-/* ===== BOOT — premium ===== */
-#boot{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 38%,#1a1540 0%,#0a0818 55%,#050410 100%);z-index:9999;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-#boot-canvas{position:absolute;inset:0;z-index:0;}
-#boot-vignette{position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,transparent 40%,rgba(5,4,14,0.7) 100%);}
-#boot-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;}
-#boot-logo{display:flex;flex-direction:column;align-items:center;margin-bottom:34px;}
-#boot-logo-mark{position:relative;width:118px;height:118px;display:flex;align-items:center;justify-content:center;margin-bottom:26px;animation:floaty 3.2s ease-in-out infinite;}
-#boot-logo-core{position:absolute;inset:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b9b2ff,#534AB7 55%,#2a2470);display:flex;align-items:center;justify-content:center;box-shadow:0 0 60px rgba(127,119,221,0.85),0 0 120px rgba(127,119,221,0.4),inset 0 0 26px rgba(255,255,255,0.3);}
-#boot-logo-letter{font-size:24px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.3);}
-#boot-logo-text{font-size:38px;font-weight:700;letter-spacing:6px;color:#fff;text-shadow:0 0 50px rgba(127,119,221,0.7),0 2px 20px rgba(0,0,0,0.5);background:linear-gradient(180deg,#fff,#c8c4f0);-webkit-background-clip:text;background-clip:text;}
-#boot-logo-tag{font-size:10px;color:#6a64a0;letter-spacing:3px;margin-top:8px;text-transform:uppercase;}
-#boot-log{height:96px;width:340px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;margin-bottom:26px;overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 40%);mask-image:linear-gradient(to bottom,transparent,#000 40%);}
-.boot-log-line{font-family:'Cascadia Code','Fira Code',monospace;font-size:11px;color:#8a84c0;letter-spacing:0.3px;animation:bootLineIn 0.35s ease;}
-.bll-ok{color:#6fd99a;margin-right:7px;}
-.bll-ok i{font-size:9px;}
-@keyframes bootLineIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-#boot-bar-wrap{width:300px;}
-#boot-bar-track{width:100%;height:3px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;position:relative;}
-#boot-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#3c34a0,#7F77DD,#9F99EE);border-radius:3px;transition:width 0.35s cubic-bezier(0.4,0,0.2,1);box-shadow:0 0 16px rgba(127,119,221,0.7);position:relative;}
-#boot-bar-fill::after{content:'';position:absolute;top:0;right:0;width:30px;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6));}
-#boot-bar-meta{display:flex;justify-content:space-between;margin-top:12px;font-size:11px;}
-#boot-status{color:#7a74aa;letter-spacing:0.5px;}
-#boot-pct{color:#9F99EE;font-family:'Cascadia Code',monospace;font-weight:500;}
-#boot-footer{position:absolute;bottom:22px;z-index:2;font-size:10px;color:#34315a;letter-spacing:3px;text-transform:uppercase;}
+/* ===== BOOT — Linux terminal style ===== */
+#boot{position:fixed;inset:0;background:#000;z-index:9999;overflow-y:auto;overflow-x:hidden;display:block;padding:16px 18px;font-family:'Cascadia Code','Consolas','DejaVu Sans Mono',monospace;}
+#boot-term{font-size:13px;line-height:1.45;color:#d0d0d0;white-space:pre-wrap;word-break:break-word;}
+.boot-line{white-space:pre-wrap;}
+.boot-ok{color:#3fbf6f;}
+.boot-warn{color:#d8c84a;}
+.boot-info{color:#6fa8dc;}
+.boot-dim{color:#888;}
+.boot-bright{color:#fff;}
+#boot-cursor{display:inline-block;color:#d0d0d0;font-size:13px;font-family:'Cascadia Code',monospace;animation:bootBlink 1s step-end infinite;}
+@keyframes bootBlink{50%{opacity:0;}}
 
 /* ===== LOGIN — gorgeous ===== */
 #login{position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,#1a1640 0%,transparent 55%),radial-gradient(ellipse at 75% 80%,#0f2850 0%,transparent 55%),linear-gradient(135deg,#08060f,#0c0a1c);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;}
@@ -326,10 +313,3 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,s
 #fx-ctxmenu .ctx-it.danger,#fx-ctxmenu .ctx-it.danger i{color:#e8888a;}
 .fx-item.fx-script .fx-item-icon i{color:#9F99EE;}
 
-/* ===== Boot logo extra flair ===== */
-@keyframes bootGlow{0%,100%{text-shadow:0 0 40px rgba(127,119,221,0.6),0 2px 20px rgba(0,0,0,0.5);}50%{text-shadow:0 0 70px rgba(159,153,238,0.95),0 0 30px rgba(127,119,221,0.6),0 2px 20px rgba(0,0,0,0.5);}}
-#boot-logo-text{animation:bootGlow 2.6s ease-in-out infinite;}
-@keyframes corePulse{0%,100%{box-shadow:0 0 60px rgba(127,119,221,0.85),0 0 120px rgba(127,119,221,0.4),inset 0 0 26px rgba(255,255,255,0.3);}50%{box-shadow:0 0 100px rgba(159,153,238,1),0 0 200px rgba(127,119,221,0.6),inset 0 0 36px rgba(255,255,255,0.5);}}
-#boot-logo-core{animation:corePulse 2.2s ease-in-out infinite;}
-@keyframes tagShimmer{0%,100%{opacity:0.55;}50%{opacity:1;}}
-#boot-logo-tag{animation:tagShimmer 2.6s ease-in-out infinite;}

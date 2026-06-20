@@ -6,7 +6,7 @@ var appStartTime = Date.now();
    public proxy fallbacks only.
    Example: "https://camos-proxy.yourname.workers.dev"
    ============================================================ */
-var CAMOS_PROXY = "https://camos.detlaffcameron.workers.dev";
+var CAMOS_PROXY = "";
 
 function workerBase(){return CAMOS_PROXY.replace(/\/$/,'');}
 function P_WORKER(u){return workerBase()+'/?u='+encodeURIComponent(u);}
@@ -99,8 +99,9 @@ var WP=[
   {name:'Midnight',css:'linear-gradient(135deg,#000005,#08081a,#0a0a22)'}
 ];
 var customWP=[];
+var WP_STORE_KEY='camos_wallpaper_v1';
 function allWallpapers(){return WP.concat(customWP);}
-function applyWallpaper(i){
+function applyWallpaper(i,skipSave){
   var all=allWallpapers();
   if(i<0||i>=all.length)return;
   wpIdx=i;
@@ -108,206 +109,109 @@ function applyWallpaper(i){
   var d=document.getElementById('desktop');
   if(w.image){d.style.background='#06060f';d.style.backgroundImage='url('+w.image+')';d.style.backgroundSize='cover';d.style.backgroundPosition='center';}
   else{d.style.backgroundImage='';d.style.background=w.css;}
+  if(!skipSave)wpSaveStore();
+}
+function wpSaveStore(){
+  try{
+    var all=allWallpapers();
+    var w=all[wpIdx]||WP[0];
+    localStorage.setItem(WP_STORE_KEY,JSON.stringify({wallpaper:w,custom:customWP}));
+  }catch(e){}
+}
+function wpLoadStore(){
+  try{
+    var raw=localStorage.getItem(WP_STORE_KEY);
+    if(!raw)return;
+    var data=JSON.parse(raw);
+    if(data.custom&&data.custom.length)customWP=data.custom;
+    if(data.wallpaper){
+      // find the saved wallpaper in the current list (presets+custom), else apply directly
+      var all=allWallpapers();
+      var idx=-1;
+      for(var i=0;i<all.length;i++){
+        if(all[i].image&&all[i].image===data.wallpaper.image){idx=i;break;}
+        if(!all[i].image&&all[i].css===data.wallpaper.css&&all[i].name===data.wallpaper.name){idx=i;break;}
+      }
+      if(idx>-1)applyWallpaper(idx,true);
+      else{
+        // wallpaper not in list (e.g. a one-off): apply its style directly
+        wpIdx=0;
+        var d=document.getElementById('desktop');
+        var w=data.wallpaper;
+        if(d){if(w.image){d.style.background='#06060f';d.style.backgroundImage='url('+w.image+')';d.style.backgroundSize='cover';d.style.backgroundPosition='center';}else if(w.css){d.style.backgroundImage='';d.style.background=w.css;}}
+      }
+    }
+  }catch(e){}
 }
 var NICONS={welcome:'ti-device-desktop',bookmark:'ti-bookmark',notepad:'ti-file-text',wallpaper:'ti-palette',info:'ti-info-circle',error:'ti-alert-circle',download:'ti-download'};
 var ntimer=null, modalCB=null, bootIdx=0, bootAnimId=null;
-var BOOT_STEPS=[
-  'Initializing CamOS kernel 3.0',
-  'Probing virtual hardware',
-  'Mounting filesystem /dev/vda1',
-  'Loading device drivers',
-  'Bringing up network interface',
-  'Starting camsh service',
-  'Launching window manager',
-  'Loading desktop environment',
-  'Finalizing user session',
-  'Welcome'
+var BOOT_LINES=[
+  {t:'',c:'bright',x:'CamOS 3.0.0-cam1 (tty1)',d:120},
+  {t:'',c:'dim',x:'',d:40},
+  {ok:1,x:'Started Load Kernel Modules'},
+  {ok:1,x:'Mounted /dev/vda1 on /'},
+  {ok:1,x:'Reached target Local File Systems'},
+  {ok:1,x:'Started Create Static Device Nodes in /dev'},
+  {ok:1,x:'Started udev Kernel Device Manager'},
+  {ok:1,x:'Started Journal Service'},
+  {ok:1,x:'Detected '+(navigator.hardwareConcurrency||4)+' CPU core(s)'},
+  {ok:1,x:'Started Setup Virtual Console'},
+  {ok:1,x:'Reached target System Initialization'},
+  {ok:1,x:'Started Network Manager'},
+  {ok:1,x:'Bringing up interface eth0 ... acquired DHCP lease'},
+  {ok:1,x:'Reached target Network'},
+  {ok:1,x:'Started Permit User Sessions'},
+  {ok:1,x:'Started CamScript Runtime Service'},
+  {ok:1,x:'Started CamOS Window Manager (cam-wm)'},
+  {ok:1,x:'Started Login Service'},
+  {ok:1,x:'Reached target Graphical Interface'},
+  {t:'',c:'dim',x:'',d:60},
+  {t:'',c:'info',x:'CamOS 3.0  cameron-pc  tty1',d:120},
+  {t:'',c:'dim',x:'Starting desktop session ...',d:400}
 ];
 
-/* ============ BOOT ============ */
-function initBootCanvas(){
-  var canvas=document.getElementById('boot-canvas');
-  if(!canvas)return;
-  var ctx=canvas.getContext('2d');
-  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
-  resize(); window.addEventListener('resize',resize);
-
-  var COL=['159,153,238','127,119,221','83,74,183','200,180,255'];
-
-  // Dense parallax starfield
-  var stars=[];
-  for(var i=0;i<360;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.9+0.1,tw:Math.random()*Math.PI*2});
-
-  // Warp-streak stars shooting outward from center
-  var streaks=[];
-  function spawnStreak(){var a=Math.random()*Math.PI*2;return{a:a,d:Math.random()*0.1,sp:0.004+Math.random()*0.012,len:0.04+Math.random()*0.08};}
-  for(var w=0;w<70;w++)streaks.push(spawnStreak());
-
-  // Drifting network particles
-  var net=[];
-  for(var n=0;n<46;n++)net.push({x:Math.random(),y:Math.random(),vx:(Math.random()-0.5)*0.0009,vy:(Math.random()-0.5)*0.0009});
-
-  // Rising sparks
-  var sparks=[];
-  for(var sp=0;sp<90;sp++)sparks.push({x:Math.random(),y:Math.random(),speed:0.001+Math.random()*0.004,size:Math.random()*2+0.4,hue:Math.floor(Math.random()*4)});
-
-  // Expanding shockwave rings (burst from center, not spinning)
-  var waves=[];
-  function spawnWave(){return{r:0,max:0.55+Math.random()*0.3,sp:0.004+Math.random()*0.004,a:1};}
-  for(var wv=0;wv<3;wv++){var iw=spawnWave();iw.r=Math.random()*iw.max;waves.push(iw);}
-
-  // Lightning bolts that flash occasionally
-  var bolts=[];
-  var nextBolt=0;
-  function makeBolt(W,H){
-    var x0=Math.random()*W, segs=[], y=0, x=x0;
-    while(y<H){y+=20+Math.random()*40;x+=(Math.random()-0.5)*70;segs.push({x:x,y:y});}
-    return{segs:segs,x0:x0,life:1};
-  }
-
-  // Floating glow particles (big soft bokeh)
-  var bokeh=[];
-  for(var bk=0;bk<14;bk++)bokeh.push({x:Math.random(),y:Math.random(),r:30+Math.random()*70,drift:0.0001+Math.random()*0.0003,a:0.03+Math.random()*0.05,hue:Math.floor(Math.random()*4),ph:Math.random()*Math.PI*2});
-
-  function frame(){
-    var W=canvas.width,H=canvas.height,cx=W/2,cy=H*0.42;
-    var t=Date.now()/1000;
-    var minWH=Math.min(W,H);
-    var pulse=0.5+0.5*Math.sin(t*2);
-
-    // shifting nebula backdrop
-    ctx.clearRect(0,0,W,H);
-    var hueShift=Math.sin(t*0.3)*20;
-    var bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.9);
-    bg.addColorStop(0,'rgba('+(48+hueShift)+',38,'+(108+hueShift)+',0.42)');
-    bg.addColorStop(0.4,'rgba(26,18,58,0.18)');
-    bg.addColorStop(1,'rgba(3,2,10,0)');
-    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-
-    // big soft bokeh glows
-    for(var bi=0;bi<bokeh.length;bi++){
-      var bo=bokeh[bi]; bo.y-=bo.drift; if(bo.y<-0.15)bo.y=1.15;
-      var ba=bo.a*(0.6+0.4*Math.sin(t*1.2+bo.ph));
-      var bx=bo.x*W, by=bo.y*H;
-      var bgrad=ctx.createRadialGradient(bx,by,0,bx,by,bo.r);
-      bgrad.addColorStop(0,'rgba('+COL[bo.hue]+','+ba+')');
-      bgrad.addColorStop(1,'rgba('+COL[bo.hue]+',0)');
-      ctx.fillStyle=bgrad; ctx.beginPath(); ctx.arc(bx,by,bo.r,0,Math.PI*2); ctx.fill();
-    }
-
-    // parallax starfield
-    for(var i=0;i<stars.length;i++){
-      var s2=stars[i];
-      var x=s2.x*W, y=s2.y*H;
-      var tw=0.3+0.7*Math.abs(Math.sin(t*1.8+s2.tw));
-      ctx.beginPath(); ctx.arc(x,y,s2.z*1.5,0,Math.PI*2);
-      ctx.fillStyle='rgba(200,196,255,'+(s2.z*0.6*tw)+')'; ctx.fill();
-      s2.y+=0.00018*s2.z; if(s2.y>1)s2.y=0;
-    }
-
-    // warp streaks from center
-    for(var ws=0;ws<streaks.length;ws++){
-      var sr=streaks[ws]; sr.d+=sr.sp;
-      var x1=cx+Math.cos(sr.a)*sr.d*minWH, y1=cy+Math.sin(sr.a)*sr.d*minWH;
-      var x2=cx+Math.cos(sr.a)*(sr.d+sr.len)*minWH, y2=cy+Math.sin(sr.a)*(sr.d+sr.len)*minWH;
-      var alpha=Math.min(1,sr.d*3)*0.5;
-      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-      ctx.strokeStyle='rgba(180,170,255,'+alpha+')'; ctx.lineWidth=1.4; ctx.stroke();
-      if(sr.d>0.75)streaks[ws]=spawnStreak();
-    }
-
-    // expanding shockwaves
-    for(var vi=0;vi<waves.length;vi++){
-      var wa=waves[vi]; wa.r+=wa.sp; wa.a=1-(wa.r/wa.max);
-      if(wa.r>=wa.max){waves[vi]=spawnWave();continue;}
-      ctx.beginPath(); ctx.arc(cx,cy,wa.r*minWH,0,Math.PI*2);
-      ctx.strokeStyle='rgba(159,153,238,'+(wa.a*0.5)+')'; ctx.lineWidth=2*wa.a+0.5; ctx.stroke();
-    }
-
-    // network particles + links
-    for(var a=0;a<net.length;a++){
-      var p=net[a]; p.x+=p.vx; p.y+=p.vy;
-      if(p.x<0||p.x>1)p.vx*=-1; if(p.y<0||p.y>1)p.vy*=-1;
-      for(var b=a+1;b<net.length;b++){
-        var q=net[b];
-        var dx=(p.x-q.x)*W, dy=(p.y-q.y)*H, dist=Math.sqrt(dx*dx+dy*dy);
-        if(dist<140){
-          ctx.beginPath(); ctx.moveTo(p.x*W,p.y*H); ctx.lineTo(q.x*W,q.y*H);
-          ctx.strokeStyle='rgba(127,119,221,'+((1-dist/140)*0.16)+')'; ctx.lineWidth=0.6; ctx.stroke();
-        }
-      }
-      ctx.beginPath(); ctx.arc(p.x*W,p.y*H,1.4,0,Math.PI*2);
-      ctx.fillStyle='rgba(159,153,238,0.45)'; ctx.fill();
-    }
-
-    // huge pulsing core
-    var coreR=minWH*(0.06+0.02*pulse);
-    var cg=ctx.createRadialGradient(cx,cy,0,cx,cy,coreR*5);
-    cg.addColorStop(0,'rgba(220,210,255,'+(0.5+0.3*pulse)+')');
-    cg.addColorStop(0.3,'rgba(159,153,238,'+(0.3+0.15*pulse)+')');
-    cg.addColorStop(0.6,'rgba(127,119,221,0.08)');
-    cg.addColorStop(1,'rgba(127,119,221,0)');
-    ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(cx,cy,coreR*5,0,Math.PI*2); ctx.fill();
-
-    // lightning flashes
-    if(t>nextBolt){
-      bolts.push(makeBolt(W,H));
-      nextBolt=t+0.6+Math.random()*2.2;
-    }
-    for(var li=bolts.length-1;li>=0;li--){
-      var bl=bolts[li]; bl.life-=0.08;
-      if(bl.life<=0){bolts.splice(li,1);continue;}
-      ctx.beginPath(); ctx.moveTo(bl.x0,0);
-      for(var bs=0;bs<bl.segs.length;bs++)ctx.lineTo(bl.segs[bs].x,bl.segs[bs].y);
-      ctx.strokeStyle='rgba(210,200,255,'+(bl.life*0.5)+')'; ctx.lineWidth=1.5; ctx.stroke();
-      // glow flash
-      if(bl.life>0.85){ctx.fillStyle='rgba(159,153,238,0.04)';ctx.fillRect(0,0,W,H);}
-    }
-
-    // rising colourful sparks
-    for(var k2=0;k2<sparks.length;k2++){
-      var sk=sparks[k2]; sk.y-=sk.speed; if(sk.y<0){sk.y=1;sk.x=Math.random();}
-      var sa=0.5*(1-sk.y)+0.25;
-      ctx.beginPath(); ctx.arc(sk.x*W,sk.y*H,sk.size,0,Math.PI*2);
-      ctx.fillStyle='rgba('+COL[sk.hue]+','+sa+')'; ctx.fill();
-    }
-
-    bootAnimId=requestAnimationFrame(frame);
-  }
-  frame();
+/* ============ BOOT (Linux-style scrolling text) ============ */
+var bootT0=Date.now();
+function bootStamp(){
+  var s=((Date.now()-bootT0)/1000).toFixed(6);
+  while(s.length<11)s=' '+s;
+  return '[ '+s+' ]';
 }
-function stopBootCanvas(){ if(bootAnimId){cancelAnimationFrame(bootAnimId);bootAnimId=null;} }
-
 function bootStep(){
-  if(bootIdx>=BOOT_STEPS.length){
-    var st=document.getElementById('boot-status');if(st)st.textContent='Welcome to CamOS';
-    stopBootCanvas();
+  var term=document.getElementById('boot-term');
+  if(bootIdx>=BOOT_LINES.length){
+    var cur=document.getElementById('boot-cursor');if(cur)cur.style.display='none';
     setTimeout(function(){
       var bs=document.getElementById('boot');
-      bs.style.transition='opacity 0.7s'; bs.style.opacity='0';
-      setTimeout(function(){bs.style.display='none';showLogin();},700);
-    },500);
+      bs.style.transition='opacity 0.4s'; bs.style.opacity='0';
+      setTimeout(function(){bs.style.display='none';showLogin();},400);
+    },350);
     return;
   }
-  var msg=BOOT_STEPS[bootIdx];
-  var progress=Math.round((bootIdx+1)/BOOT_STEPS.length*100);
-  var fill=document.getElementById('boot-bar-fill');
-  var pct=document.getElementById('boot-pct');
-  var status=document.getElementById('boot-status');
-  var log=document.getElementById('boot-log');
-  if(fill)fill.style.width=progress+'%';
-  if(pct)pct.textContent=progress+'%';
-  if(status)status.textContent=msg;
-  if(log){
-    var line=document.createElement('div');
-    line.className='boot-log-line';
-    line.innerHTML='<span class="bll-ok">[ <i class="ti ti-check"></i> ]</span> '+msg;
-    log.appendChild(line);
-    while(log.children.length>5)log.removeChild(log.firstChild);
+  var item=BOOT_LINES[bootIdx];
+  if(term){
+    var div=document.createElement('div');
+    div.className='boot-line';
+    if(item.ok){
+      div.innerHTML='<span class="boot-dim">'+bootStamp()+'</span> <span class="boot-ok">[  OK  ]</span> '+escHtml(item.x);
+    }else{
+      var cls=item.c?('boot-'+item.c):'';
+      var stamp=(item.t==='')?'':('<span class="boot-dim">'+bootStamp()+'</span> ');
+      div.innerHTML=stamp+'<span class="'+cls+'">'+escHtml(item.x)+'</span>';
+    }
+    term.appendChild(div);
+    window.scrollTo(0,document.body.scrollHeight);
+    var bt=document.getElementById('boot-term');
+    if(bt)bt.scrollTop=bt.scrollHeight;
   }
   bootIdx++;
-  setTimeout(bootStep,260+Math.random()*220);
+  var delay=item.d||(40+Math.random()*70);
+  setTimeout(bootStep,delay);
 }
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// kept as no-ops so existing init calls still work
+function initBootCanvas(){}
+function stopBootCanvas(){}
 
 /* ============ LOGIN ============ */
 function initLoginCanvas(){
@@ -395,6 +299,7 @@ function startDesktop(){
   d.style.display='block'; d.style.opacity='0'; d.style.transition='opacity 0.5s';
   setTimeout(function(){d.style.opacity='1';},50);
   initDesktopCanvas();
+  wpLoadStore();
   tickClock(); setInterval(tickClock,1000); setInterval(siPoll,2500);
   setTimeout(function(){showNotif('welcome','Welcome to CamOS! Double-click icons to open apps.');},900);
 }
@@ -1564,7 +1469,7 @@ function renderWallpaperGrid(){
     tile.appendChild(label);
     if(i>=WP.length){
       var del=document.createElement('span');del.className='wp-tile-del';del.innerHTML='<i class="ti ti-x"></i>';
-      del.addEventListener('click',function(e){e.stopPropagation();customWP.splice(i-WP.length,1);if(wpIdx>=allWallpapers().length)wpIdx=0;renderWallpaperGrid();});
+      del.addEventListener('click',function(e){e.stopPropagation();customWP.splice(i-WP.length,1);if(wpIdx>=allWallpapers().length)wpIdx=0;wpSaveStore();renderWallpaperGrid();});
       tile.appendChild(del);
     }
     tile.addEventListener('click',function(){applyWallpaper(i);renderWallpaperGrid();});
