@@ -146,29 +146,60 @@ function wpLoadStore(){
 var NICONS={welcome:'ti-device-desktop',bookmark:'ti-bookmark',notepad:'ti-file-text',wallpaper:'ti-palette',info:'ti-info-circle',error:'ti-alert-circle',download:'ti-download'};
 var ntimer=null, modalCB=null, bootIdx=0, bootAnimId=null;
 var BOOT_LINES=[
+  {t:'',c:'dim',x:'CamBIOS 2.40 — Press DEL to enter setup',d:90},
+  {t:'',c:'dim',x:'Memory Test: 16384 MB ... OK',d:90},
+  {t:'',c:'dim',x:'Booting from /dev/vda1 ...',d:120},
+  {t:'',c:'dim',x:'',d:30},
   {t:'',c:'bright',x:'CamOS 3.0.0-cam1 (tty1)',d:120},
-  {t:'',c:'dim',x:'',d:40},
+  {t:'',c:'dim',x:'Linux-compatible kernel 3.0.0-cam1 #1 SMP x86_64',d:40},
+  {t:'',c:'dim',x:'',d:30},
+  {raw:1,x:'<span class="boot-dim">[ '+'   0.000142'+' ]</span> Command line: BOOT_IMAGE=/boot/camos-3.0 ro quiet splash'},
   {ok:1,x:'Started Load Kernel Modules'},
+  {ok:1,x:'Mounted Kernel Debug File System'},
+  {ok:1,x:'Mounted POSIX Message Queue File System'},
   {ok:1,x:'Mounted /dev/vda1 on /'},
+  {ok:1,x:'Started Remount Root and Kernel File Systems'},
   {ok:1,x:'Reached target Local File Systems'},
   {ok:1,x:'Started Create Static Device Nodes in /dev'},
+  {ok:1,x:'Started udev Coldplug all Devices'},
   {ok:1,x:'Started udev Kernel Device Manager'},
   {ok:1,x:'Started Journal Service'},
   {ok:1,x:'Detected '+(navigator.hardwareConcurrency||4)+' CPU core(s)'},
+  {ok:1,x:'Detected 16384 MB system memory'},
   {ok:1,x:'Started Setup Virtual Console'},
+  {ok:1,x:'Started Apply Kernel Variables'},
   {ok:1,x:'Reached target System Initialization'},
+  {ok:1,x:'Started Daily apt download activities'},
+  {ok:1,x:'Listening on D-Bus System Message Bus Socket'},
+  {ok:1,x:'Reached target Sockets'},
+  {ok:1,x:'Reached target Basic System'},
+  {ok:1,x:'Started System Logging Service'},
+  {ok:1,x:'Started D-Bus System Message Bus'},
+  {ok:1,x:'Starting Network Manager...'},
   {ok:1,x:'Started Network Manager'},
-  {ok:1,x:'Bringing up interface eth0 ... acquired DHCP lease'},
+  {ok:1,x:'Bringing up interface eth0'},
+  {ok:1,x:'eth0: acquired DHCP lease 192.168.1.42'},
   {ok:1,x:'Reached target Network'},
+  {ok:1,x:'Started Network Time Synchronization'},
+  {ok:1,x:'Started Disk Manager'},
+  {ok:1,x:'Mounted CamOS Virtual File System'},
   {ok:1,x:'Started Permit User Sessions'},
   {ok:1,x:'Started CamScript Runtime Service'},
+  {ok:1,x:'Started CamOS Proxy Client'},
+  {ok:1,x:'Started Accounts Service'},
+  {ok:1,x:'Started Authorization Manager'},
+  {ok:1,x:'Starting CamOS Window Manager...'},
   {ok:1,x:'Started CamOS Window Manager (cam-wm)'},
   {ok:1,x:'Started Login Service'},
+  {ok:1,x:'Started User Manager for UID 1000'},
   {ok:1,x:'Reached target Graphical Interface'},
-  {t:'',c:'dim',x:'',d:60},
-  {t:'',c:'info',x:'CamOS 3.0  cameron-pc  tty1',d:120},
-  {t:'',c:'dim',x:'Starting desktop session ...',d:400}
+  {ok:1,x:'Reached target Multi-User System'},
+  {t:'',c:'dim',x:'',d:50},
+  {t:'',c:'info',x:'CamOS 3.0  cameron-pc  tty1',d:90},
+  {t:'',c:'dim',x:'cameron-pc login: cameron (automatic)',d:120},
+  {t:'',c:'dim',x:'Starting desktop session ...',d:350}
 ];
+
 
 /* ============ BOOT (Linux-style scrolling text) ============ */
 var bootT0=Date.now();
@@ -192,7 +223,9 @@ function bootStep(){
   if(term){
     var div=document.createElement('div');
     div.className='boot-line';
-    if(item.ok){
+    if(item.raw){
+      div.innerHTML=item.x;
+    }else if(item.ok){
       div.innerHTML='<span class="boot-dim">'+bootStamp()+'</span> <span class="boot-ok">[  OK  ]</span> '+escHtml(item.x);
     }else{
       var cls=item.c?('boot-'+item.c):'';
@@ -200,12 +233,11 @@ function bootStep(){
       div.innerHTML=stamp+'<span class="'+cls+'">'+escHtml(item.x)+'</span>';
     }
     term.appendChild(div);
-    window.scrollTo(0,document.body.scrollHeight);
-    var bt=document.getElementById('boot-term');
-    if(bt)bt.scrollTop=bt.scrollHeight;
+    var bs2=document.getElementById('boot');
+    if(bs2)bs2.scrollTop=bs2.scrollHeight;
   }
   bootIdx++;
-  var delay=item.d||(40+Math.random()*70);
+  var delay=item.d||(14+Math.random()*34);
   setTimeout(bootStep,delay);
 }
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -214,69 +246,65 @@ function initBootCanvas(){}
 function stopBootCanvas(){}
 
 /* ============ LOGIN ============ */
-function initLoginCanvas(){
-  var canvas=document.getElementById('login-canvas');
-  if(!canvas)return;
-  var ctx=canvas.getContext('2d');
-  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
-  resize(); window.addEventListener('resize',resize);
-  var pts=[];
-  for(var i=0;i<55;i++)pts.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-0.5)*0.25,vy:(Math.random()-0.5)*0.25,r:Math.random()*1.6+0.4});
-  function frame(){
-    var W=canvas.width,H=canvas.height;
-    ctx.clearRect(0,0,W,H);
-    for(var i=0;i<pts.length;i++){
-      var p=pts[i]; p.x+=p.vx; p.y+=p.vy;
-      if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
-      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(127,119,221,0.45)';ctx.fill();
-      for(var j=i+1;j<pts.length;j++){
-        var q=pts[j],dx=p.x-q.x,dy=p.y-q.y,d=Math.sqrt(dx*dx+dy*dy);
-        if(d<130){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle='rgba(83,74,183,'+((1-d/130)*0.18)+')';ctx.lineWidth=0.5;ctx.stroke();}
-      }
-    }
-    window._loginAnim=requestAnimationFrame(frame);
-  }
-  frame();
-}
+var LOGIN_LOGO=[
+  '  ____                  ___  ____  ',
+  ' / ___|__ _ _ __ ___   / _ \\/ ___| ',
+  '| |   / _` | \'_ ` _ \\ | | | \\___ \\ ',
+  '| |__| (_| | | | | | || |_| |___) |',
+  ' \\____\\__,_|_| |_| |_| \\___/|____/ '
+].join('\n');
+
 function showLogin(){
   var ls=document.getElementById('login');
-  ls.style.display='flex'; ls.style.opacity='0'; ls.style.transition='opacity 0.6s';
-  initLoginCanvas();
-  setTimeout(function(){ls.style.opacity='1';document.getElementById('login-pw').focus();},50);
+  var logo=document.getElementById('login-logo');
+  if(logo)logo.textContent=LOGIN_LOGO;
+  ls.style.display='flex'; ls.style.opacity='0'; ls.style.transition='opacity 0.45s';
+  var pwd=document.getElementById('login-pw');
+  if(pwd)pwd.value='';
+  loginRenderPw();
+  setTimeout(function(){ls.style.opacity='1';if(pwd)pwd.focus();},40);
   tickLoginClock(); window._lci=setInterval(tickLoginClock,1000);
+}
+function loginRenderPw(){
+  var pwd=document.getElementById('login-pw');
+  var disp=document.getElementById('login-pw-display');
+  if(pwd&&disp)disp.textContent=new Array(pwd.value.length+1).join('*');
 }
 function tickLoginClock(){
   var d=new Date();
   var t=document.getElementById('login-time');
   var dt=document.getElementById('login-date');
+  var sb=document.getElementById('login-sb-clock');
   if(t)t.textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   if(dt)dt.textContent=d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+  if(sb)sb.textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 function doLogin(){
-  var pw=document.getElementById('login-pw').value;
+  var pwd=document.getElementById('login-pw');
+  var pw=pwd?pwd.value:'';
   if(pw===''||pw==='1234'){
     clearInterval(window._lci);
-    if(window._loginAnim)cancelAnimationFrame(window._loginAnim);
     var ls=document.getElementById('login');
-    ls.style.transition='opacity 0.5s'; ls.style.opacity='0';
-    setTimeout(function(){ls.style.display='none';startDesktop();},500);
+    ls.style.transition='opacity 0.4s'; ls.style.opacity='0';
+    setTimeout(function(){ls.style.display='none';startDesktop();},400);
   }else{
     var err=document.getElementById('login-err');
-    var card=document.getElementById('login-card');
-    err.textContent='Incorrect password';
-    card.style.animation='shake 0.4s';
-    setTimeout(function(){card.style.animation='';},400);
-    document.getElementById('login-pw').value='';
-    setTimeout(function(){err.textContent='';},3000);
+    var ls2=document.getElementById('login');
+    if(err)err.textContent='Login incorrect';
+    if(ls2){ls2.classList.add('shake');setTimeout(function(){ls2.classList.remove('shake');},420);}
+    if(pwd)pwd.value='';
+    loginRenderPw();
+    setTimeout(function(){if(err)err.textContent='';},3000);
   }
 }
+// kept as no-op so any stale calls are harmless
+function initLoginCanvas(){}
 function doLogout(){
   closeMenu();
   ['terminal','browser','notepad','sysinfo','files','code'].forEach(closeApp);
   var d=document.getElementById('desktop');
   d.style.transition='opacity 0.4s'; d.style.opacity='0';
-  setTimeout(function(){d.style.display='none';d.style.opacity='1';document.getElementById('login-pw').value='';showLogin();},400);
+  setTimeout(function(){d.style.display='none';d.style.opacity='1';var pwd=document.getElementById('login-pw');if(pwd)pwd.value='';showLogin();},400);
 }
 
 /* ============ DESKTOP ============ */
@@ -397,7 +425,55 @@ var CMDS={
   mkdir:function(a){if(!a[0])return'mkdir: missing operand';var p=cwdNode();if(!p)return'error';if(p.children[a[0]])return'mkdir: '+a[0]+': exists';p.children[a[0]]={type:'dir',children:{}};return'';},
   touch:function(a){if(!a[0])return'touch: missing operand';var p=cwdNode();if(!p)return'error';if(!p.children[a[0]])p.children[a[0]]={type:'file',content:''};return'';},
   rm:function(a){if(!a[0])return'rm: missing operand';var p=cwdNode();if(!p||!p.children[a[0]])return'rm: '+a[0]+': No such file';delete p.children[a[0]];return'';},
-  neofetch:function(){return'<span style="color:#7F77DD">   /\\    </span>  <span style="color:#9090dd">cameron</span><span style="color:#555">@</span><span style="color:#9090dd">camos</span>\n<span style="color:#534AB7">  /  \\   </span>  OS: CamOS 3.0\n<span style="color:#534AB7"> / /\\ \\  </span>  Shell: camsh 3.0\n<span style="color:#3c34a0">/_/  \\_\\ </span>  CPU: '+(navigator.hardwareConcurrency||'?')+' threads\n           Res: '+window.screen.width+'x'+window.screen.height;}
+  neofetch:function(){
+    function up(){var s=Math.floor((Date.now()-appStartTime)/1000);var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;var o='';if(h)o+=h+'h ';if(h||m)o+=m+'m ';o+=sec+'s';return o;}
+    var ua=navigator.userAgent;
+    var eng=ua.indexOf('Firefox')>-1?'Gecko':ua.indexOf('Edg')>-1?'Blink (Edge)':ua.indexOf('Chrome')>-1?'Blink':ua.indexOf('Safari')>-1?'WebKit':'Unknown';
+    var mem=(performance&&performance.memory)?(Math.round(performance.memory.usedJSHeapSize/1048576)+' MB / '+Math.round(performance.memory.jsHeapSizeLimit/1048576)+' MB'):'N/A';
+    var cores=(navigator.hardwareConcurrency||'?');
+    var res=window.screen.width+'x'+window.screen.height;
+    var lang=navigator.language||'en';
+    var net=navigator.onLine?'online':'offline';
+    var P='#9F99EE',D='#6a64a0',W='#cfcaf0',G='#33ff88';
+    function row(k,v){return '<span style="color:'+P+'">'+k+'</span><span style="color:'+D+'">: </span><span style="color:'+W+'">'+v+'</span>';}
+    var logo=[
+      '<span style="color:'+P+'">       ._____.       </span>',
+      '<span style="color:'+P+'">     .dP     Yb.     </span>',
+      '<span style="color:'+P+'">    dP         Yb    </span>',
+      '<span style="color:'+P+'">   dP   .---.       </span>',
+      '<span style="color:'+P+'">   Yb   `---\'       </span>',
+      '<span style="color:'+P+'">    Yb         dP    </span>',
+      '<span style="color:'+P+'">     `Yb.___.dP\'     </span>',
+      '<span style="color:'+P+'">        `---\'        </span>',
+      '                    ',
+      '                    '
+    ];
+    var info=[
+      '<span style="color:'+G+'">cameron</span><span style="color:'+D+'">@</span><span style="color:'+G+'">camos</span>',
+      '<span style="color:'+D+'">-----------------</span>',
+      row('OS','CamOS 3.0 x86_64'),
+      row('Host','cameron-pc (virtual)'),
+      row('Kernel','3.0.0-cam1'),
+      row('Uptime',up()),
+      row('Shell','camsh 3.0'),
+      row('WM','cam-wm'),
+      row('Resolution',res),
+      row('CPU','CamOS Virtual ('+cores+' cores)'),
+      row('GPU','VIRT-GL Renderer'),
+      row('Memory',mem),
+      row('Engine',eng),
+      row('Locale',lang),
+      row('Network',net),
+      '',
+      '<span style="background:#1a1a2e">   </span><span style="background:#534AB7">   </span><span style="background:#7F77DD">   </span><span style="background:#9F99EE">   </span><span style="background:#c8c4f0">   </span><span style="background:#33ff88">   </span><span style="background:#e0b44a">   </span><span style="background:#e05d5d">   </span>'
+    ];
+    var out='';
+    var rows=Math.max(logo.length,info.length);
+    for(var i=0;i<rows;i++){
+      out+=(logo[i]||'                    ')+'  '+(info[i]||'')+'\n';
+    }
+    return out.replace(/\n$/,'');
+  },
 };
 function runCmd(line){
   line=line.trim();if(!line)return'';
@@ -1537,10 +1613,15 @@ function closeModal(val){var ov=document.getElementById('modal-overlay');if(ov)o
 document.addEventListener('DOMContentLoaded',function(){
   ceLoadStore();
   initBootCanvas();
-  setTimeout(bootStep,600);
+  setTimeout(bootStep,250);
 
-  document.getElementById('login-go').addEventListener('click',doLogin);
-  document.getElementById('login-pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  var loginPw=document.getElementById('login-pw');
+  if(loginPw){
+    loginPw.addEventListener('input',loginRenderPw);
+    loginPw.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  }
+  var loginBox=document.getElementById('login-box');
+  if(loginBox)loginBox.addEventListener('click',function(){var p=document.getElementById('login-pw');if(p)p.focus();});
 
   var tIn=document.getElementById('t-in'),tOut=document.getElementById('t-out'),tPS=document.getElementById('t-ps');
   if(tIn){tIn.addEventListener('keydown',function(e){

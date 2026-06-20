@@ -26,31 +26,35 @@
 
 <!-- ===== LOGIN ===== -->
 <div id="login">
-  <canvas id="login-canvas"></canvas>
-  <div id="login-glow"></div>
-  <div id="login-clock-wrap">
-    <div id="login-time">00:00</div>
-    <div id="login-date">Monday, January 1</div>
-  </div>
-  <div id="login-card">
-    <div id="login-av">
-      <div id="login-av-ring"></div>
-      <span id="login-av-letter">C</span>
+  <div id="login-scanlines"></div>
+  <div id="login-box">
+    <div id="login-header">
+      <pre id="login-logo"></pre>
+      <div id="login-host">CamOS 3.0.0-cam1  <span class="login-host-dim">cameron-pc tty1</span></div>
     </div>
-    <div id="login-name">Cameron</div>
-    <div id="login-role">CamOS Local Account</div>
-    <div id="login-input-wrap">
-      <i class="ti ti-lock login-input-icon"></i>
-      <input type="password" id="login-pw" placeholder="Enter password" autocomplete="off">
-      <button id="login-go" title="Sign in"><i class="ti ti-arrow-right"></i></button>
+    <div id="login-clock-row">
+      <span id="login-time">00:00</span>
+      <span id="login-date">Monday, January 1</span>
     </div>
-    <div id="login-err"></div>
+    <div id="login-prompt-area">
+      <div class="login-prompt-line"><span class="login-prompt-label">cameron-pc login:</span> <span class="login-user-fixed">cameron</span></div>
+      <div class="login-prompt-line" id="login-pw-line">
+        <span class="login-prompt-label">Password:</span>
+        <span id="login-pw-display"></span><span id="login-pw-cursor">_</span>
+        <input type="password" id="login-pw" autocomplete="off" autofocus>
+      </div>
+      <div id="login-err"></div>
+    </div>
+    <div id="login-footer">
+      <span class="login-foot-key">[ Enter ]</span> sign in
+      <span class="login-foot-dim">— password: 1234 (or blank)</span>
+    </div>
   </div>
-  <div id="login-hint">Press Enter, or use password <b>1234</b></div>
-  <div id="login-bottom">
-    <span><i class="ti ti-wifi"></i></span>
-    <span><i class="ti ti-battery-3"></i></span>
-    <span><i class="ti ti-power"></i></span>
+  <div id="login-statusbar">
+    <span><i class="ti ti-cpu"></i> camsh</span>
+    <span><i class="ti ti-wifi"></i> connected</span>
+    <span id="login-bat"><i class="ti ti-battery-3"></i></span>
+    <span id="login-sb-clock">00:00:00</span>
   </div>
 </div>
 
