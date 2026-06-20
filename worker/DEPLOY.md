@@ -63,3 +63,11 @@ Google properties) may not be 100% interactive - they ship megabytes of
 module-graph JS that assumes its own origin and CDN. Content-heavy and
 "normal" sites (Wikipedia, news, blogs, docs, forums, most game portals)
 work well: they render, you can click links, submit searches, and navigate.
+
+## Update: YouTube / SPA relative navigation fix
+This version remembers the real site origin via a `camos_origin` cookie (and
+the Referer header) so single-page apps like YouTube that navigate to relative
+paths (e.g. `/results?search_query=...`) get reconstructed correctly instead
+of showing the "Proxy is running" banner. Redeploy worker.js to apply it.
+Note: this relies on third-party cookies being allowed for the Worker domain;
+most browsers allow them by default for this use.

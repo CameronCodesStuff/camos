@@ -22,24 +22,38 @@ async function handle(request) {
   }
 
   let target = reqUrl.searchParams.get(PROXY_PARAM);
+  let resolvedFromContext = false;
 
   // No ?u= target. This happens when a proxied page does a RELATIVE
-  // navigation (e.g. a SPA or form posts to "/results?q=cats"), which the
-  // browser resolves against the Worker's own origin. We rebuild the real
-  // URL by taking the path/query here and anchoring it to the real site,
-  // which we recover from the Referer header's ?u= value.
+  // navigation (e.g. a SPA like YouTube routes to "/results?q=cats"), which
+  // the browser resolves against the Worker's own origin. We rebuild the real
+  // URL from the path + the last-known real origin, recovered from (in order):
+  //   1. the Referer header's ?u= value
+  //   2. a "camos_origin" cookie we set on every page load
   if (!target) {
     const path = reqUrl.pathname + reqUrl.search;
     if (path && path !== "/") {
-      const ref = request.headers.get("Referer") || "";
       let realOrigin = null;
+
+      // (1) Referer with ?u=
+      const ref = request.headers.get("Referer") || "";
       try {
         const refUrl = new URL(ref);
         const refU = refUrl.searchParams.get(PROXY_PARAM);
         if (refU) realOrigin = new URL(refU).origin;
       } catch (e) {}
+
+      // (2) cookie fallback
+      if (!realOrigin) {
+        const cookie = request.headers.get("Cookie") || "";
+        const m = cookie.match(/(?:^|;\s*)camos_origin=([^;]+)/);
+        if (m) {
+          try { realOrigin = decodeURIComponent(m[1]); } catch (e) {}
+        }
+      }
+
       if (realOrigin) {
-        try { target = new URL(path, realOrigin).toString(); } catch (e) {}
+        try { target = new URL(path, realOrigin).toString(); resolvedFromContext = true; } catch (e) {}
       }
     }
   }
@@ -101,6 +115,11 @@ async function handle(request) {
   if (isHtml) {
     let html = await upstream.text();
     html = rewriteHtml(html, targetUrl, base);
+    // Remember the real origin so future RELATIVE navigations (SPA routing
+    // like YouTube search) can be reconstructed even without a ?u= param.
+    respHeaders.append("Set-Cookie",
+      "camos_origin=" + encodeURIComponent(targetUrl.origin) +
+      "; Path=/; Max-Age=86400; SameSite=None; Secure");
     return new Response(html, { status: upstream.status, headers: respHeaders });
   }
   if (isCss) {
