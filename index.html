@@ -137,6 +137,14 @@ Type <span style="color:#9090dd">help</span> for commands, or <span style="color
             <div class="br-tile" onclick="brGo('https://archive.org')"><i class="ti ti-archive"></i><span>Archive.org</span></div>
             <div class="br-tile" onclick="brGo('https://example.com')"><i class="ti ti-world"></i><span>Example</span></div>
           </div>
+          <div id="br-home-section">
+            <div class="br-home-sec-title"><i class="ti ti-bookmark"></i> Bookmarks</div>
+            <div id="br-bookmarks"></div>
+          </div>
+          <div id="br-home-section">
+            <div class="br-home-sec-title"><i class="ti ti-history"></i> Recent history <span class="br-hist-clear" onclick="brClearHistory()">clear</span></div>
+            <div id="br-history"></div>
+          </div>
         </div>
         <iframe id="br-iframe" sandbox="allow-scripts allow-forms allow-popups" title="Browser content"></iframe>
         <div id="dl-panel">
@@ -243,7 +251,10 @@ Type <span style="color:#9090dd">help</span> for commands, or <span style="color
       <div id="ce-main">
         <div id="ce-editor-pane">
           <pre id="ce-lines">1</pre>
-          <textarea id="ce-code" spellcheck="false" placeholder="Write CamScript here..."></textarea>
+          <div id="ce-input-wrap">
+            <pre id="ce-highlight" aria-hidden="true"><code id="ce-highlight-code"></code></pre>
+            <textarea id="ce-code" spellcheck="false" placeholder="Write CamScript here..."></textarea>
+          </div>
         </div>
         <div id="ce-help-pane">
           <div class="ce-help-title"><i class="ti ti-book-2"></i> CamScript Guide</div>
@@ -430,6 +441,7 @@ pi</code>
     <div class="sm-it" onclick="openApp('clicker');closeMenu()"><i class="ti ti-pointer"></i>Auto Clicker</div>
     <div class="sm-div"></div>
     <div class="sm-it" onclick="changeWallpaper();closeMenu()"><i class="ti ti-palette"></i>Change Wallpaper</div>
+    <div class="sm-it" id="sm-sound" onclick="smToggleSound()"><i class="ti ti-volume"></i>Sound: On</div>
     <div class="sm-it" id="sm-install" style="display:none" onclick="pwaInstall();closeMenu()"><i class="ti ti-download"></i>Install CamOS</div>
     <div class="sm-div"></div>
     <div class="sm-it danger" onclick="doLogout()"><i class="ti ti-logout"></i>Sign Out</div>
