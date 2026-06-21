@@ -314,3 +314,43 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,s
 #fx-ctxmenu .ctx-it.danger,#fx-ctxmenu .ctx-it.danger i{color:#e8888a;}
 .fx-item.fx-script .fx-item-icon i{color:#9F99EE;}
 
+
+/* ===== AUTOCLICKER ===== */
+#ac-body{display:flex;flex-direction:column;gap:14px;padding:16px;overflow-y:auto;}
+#ac-topbar{display:flex;align-items:center;justify-content:space-between;}
+.ac-status{font-family:'Cascadia Code',monospace;font-size:11px;font-weight:600;letter-spacing:1.5px;padding:4px 10px;border-radius:6px;}
+.ac-status.off{color:#8a8aa0;background:rgba(255,255,255,0.05);}
+.ac-status.on{color:#33ff88;background:rgba(51,255,136,0.12);box-shadow:0 0 16px rgba(51,255,136,0.25);}
+.ac-pin{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.08);color:#999;padding:5px 11px;border-radius:8px;font-size:11px;cursor:pointer;transition:all 0.15s;}
+.ac-pin:hover{background:rgba(255,255,255,0.1);color:#ddd;}
+.ac-pin.on{background:rgba(127,119,221,0.22);border-color:rgba(127,119,221,0.5);color:#cfcaf0;box-shadow:0 0 14px rgba(127,119,221,0.3);}
+.ac-pin i{font-size:13px;}
+#ac-target{position:relative;height:128px;border:2px dashed rgba(127,119,221,0.35);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;overflow:hidden;background:rgba(127,119,221,0.04);transition:all 0.15s;user-select:none;}
+#ac-target:hover{border-color:rgba(127,119,221,0.6);background:rgba(127,119,221,0.08);}
+#ac-target.armed{border-style:solid;border-color:rgba(51,255,136,0.5);background:rgba(51,255,136,0.05);}
+#ac-target.hit{background:rgba(159,153,238,0.22);}
+#ac-target i{font-size:30px;color:#9F99EE;}
+.ac-target-label{font-size:14px;color:#cfcaf0;font-weight:500;}
+.ac-target-sub{font-size:10px;color:#6a64a0;}
+.ac-ripple{position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;background:rgba(159,153,238,0.5);transform:translate(-50%,-50%) scale(0);animation:acRipple 0.42s ease-out forwards;pointer-events:none;}
+@keyframes acRipple{to{transform:translate(-50%,-50%) scale(16);opacity:0;}}
+.ac-stat-row{display:flex;align-items:center;justify-content:space-between;}
+.ac-stat{display:flex;flex-direction:column;}
+.ac-stat-num{font-family:'Cascadia Code',monospace;font-size:26px;color:#fff;font-weight:600;line-height:1;}
+.ac-stat-lbl{font-size:10px;color:#6a64a0;letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+.ac-reset{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.08);color:#999;padding:7px 12px;border-radius:8px;font-size:12px;cursor:pointer;transition:all 0.15s;}
+.ac-reset:hover{background:rgba(255,255,255,0.1);color:#ddd;}
+.ac-reset i{font-size:13px;}
+.ac-field{display:flex;flex-direction:column;gap:8px;}
+.ac-field label{font-size:12px;color:#aaa;display:flex;justify-content:space-between;align-items:center;}
+.ac-field label span{color:#9F99EE;font-family:'Cascadia Code',monospace;font-size:11px;}
+.ac-field-row{flex-direction:row;align-items:center;justify-content:space-between;}
+.ac-field-row label{flex:1;}
+#ac-cps{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:5px;background:rgba(255,255,255,0.1);outline:none;}
+#ac-cps::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#9F99EE,#7F77DD);cursor:pointer;box-shadow:0 0 10px rgba(127,119,221,0.6);}
+#ac-cps::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:#9F99EE;cursor:pointer;}
+.ac-hotkey-btn{min-width:80px;background:rgba(0,0,0,0.3);border:0.5px solid rgba(127,119,221,0.3);color:#cfcaf0;padding:7px 14px;border-radius:8px;font-family:'Cascadia Code',monospace;font-size:12px;cursor:pointer;transition:all 0.15s;}
+.ac-hotkey-btn:hover{border-color:rgba(127,119,221,0.6);background:rgba(127,119,221,0.12);}
+.ac-toggle{display:flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,#2f9e54,#3cba66);color:#fff;border:none;padding:13px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;margin-top:2px;}
+.ac-toggle:hover{filter:brightness(1.12);}
+.ac-toggle:active{transform:scale(0.98);}

@@ -68,6 +68,7 @@
   <div class="desk-icon" style="top:260px;left:16px" ondblclick="openApp('sysinfo')"><i class="ti ti-cpu"></i><span>System</span></div>
   <div class="desk-icon" style="top:340px;left:16px" ondblclick="openApp('files')"><i class="ti ti-folder"></i><span>Files</span></div>
   <div class="desk-icon" style="top:420px;left:16px" ondblclick="openApp('code')"><i class="ti ti-code"></i><span>Code</span></div>
+  <div class="desk-icon" style="top:500px;left:16px" ondblclick="openApp('clicker')"><i class="ti ti-pointer"></i><span>Clicker</span></div>
 
   <!-- TERMINAL -->
   <div class="win" id="win-terminal" style="width:540px;height:340px;top:80px;left:120px">
@@ -367,6 +368,43 @@ pi</code>
     </div>
   </div>
 
+  <!-- AUTOCLICKER -->
+  <div class="win" id="win-clicker" style="width:380px;height:470px;top:80px;left:360px">
+    <div class="win-bar" id="drag-clicker">
+      <div class="wbtns"><div class="wb cl" onclick="closeApp('clicker')"></div><div class="wb mn" onclick="minApp('clicker')"></div><div class="wb mx" onclick="maxApp('clicker')"></div></div>
+      <div class="win-ttl"><i class="ti ti-pointer"></i>Auto Clicker</div>
+    </div>
+    <div class="win-body" id="ac-body">
+      <div id="ac-topbar">
+        <div id="ac-status" class="ac-status off">STOPPED</div>
+        <button id="ac-top" class="ac-pin" onclick="acToggleTop()" title="Always on top"><i class="ti ti-pin"></i>On top</button>
+      </div>
+
+      <div id="ac-target" onclick="acManualClick()">
+        <i class="ti ti-hand-finger"></i>
+        <span class="ac-target-label">Click target</span>
+        <span class="ac-target-sub">auto-clicks land here</span>
+      </div>
+
+      <div class="ac-stat-row">
+        <div class="ac-stat"><div class="ac-stat-num" id="ac-count">0</div><div class="ac-stat-lbl">clicks</div></div>
+        <button class="ac-reset" onclick="acResetCount()"><i class="ti ti-refresh"></i>Reset</button>
+      </div>
+
+      <div class="ac-field">
+        <label>Speed <span id="ac-cps-val">10 / sec</span></label>
+        <input type="range" id="ac-cps" min="1" max="100" value="10" oninput="acSetCPS(this.value)">
+      </div>
+
+      <div class="ac-field ac-field-row">
+        <label>Start / stop hotkey</label>
+        <button id="ac-hotkey" class="ac-hotkey-btn" onclick="acStartCapture()">F6</button>
+      </div>
+
+      <button id="ac-toggle" class="ac-toggle" onclick="acToggle()"><i class="ti ti-player-play"></i>Start</button>
+    </div>
+  </div>
+
   <div id="taskbar">
     <button id="start-btn" onclick="toggleMenu()">&#x229E; Start</button>
     <div class="tb-sep"></div>
@@ -374,6 +412,7 @@ pi</code>
     <div class="tb-app" id="tb-browser" onclick="tbClick('browser')"><i class="ti ti-world"></i>Browser</div>
     <div class="tb-app" id="tb-notepad" onclick="tbClick('notepad')"><i class="ti ti-file-text"></i>Notepad</div>
     <div class="tb-app" id="tb-code" onclick="tbClick('code')"><i class="ti ti-code"></i>Code</div>
+    <div class="tb-app" id="tb-clicker" onclick="tbClick('clicker')"><i class="ti ti-pointer"></i>Clicker</div>
     <div class="tb-app" id="tb-sysinfo" onclick="tbClick('sysinfo')"><i class="ti ti-cpu"></i>System</div>
     <div class="tb-app" id="tb-files" onclick="tbClick('files')"><i class="ti ti-folder"></i>Files</div>
     <div id="tb-right"><div id="tb-date"></div><div id="tb-clock"></div></div>
@@ -388,6 +427,7 @@ pi</code>
     <div class="sm-it" onclick="openApp('sysinfo');closeMenu()"><i class="ti ti-cpu"></i>System Info</div>
     <div class="sm-it" onclick="openApp('files');closeMenu()"><i class="ti ti-folder"></i>Files</div>
     <div class="sm-it" onclick="openApp('code');closeMenu()"><i class="ti ti-code"></i>CamScript Editor</div>
+    <div class="sm-it" onclick="openApp('clicker');closeMenu()"><i class="ti ti-pointer"></i>Auto Clicker</div>
     <div class="sm-div"></div>
     <div class="sm-it" onclick="changeWallpaper();closeMenu()"><i class="ti ti-palette"></i>Change Wallpaper</div>
     <div class="sm-it" id="sm-install" style="display:none" onclick="pwaInstall();closeMenu()"><i class="ti ti-download"></i>Install CamOS</div>

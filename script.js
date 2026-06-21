@@ -6,7 +6,7 @@ var appStartTime = Date.now();
    public proxy fallbacks only.
    Example: "https://camos-proxy.yourname.workers.dev"
    ============================================================ */
-var CAMOS_PROXY = "https://camos.detlaffcameron.workers.dev/";
+var CAMOS_PROXY = "";
 
 function workerBase(){return CAMOS_PROXY.replace(/\/$/,'');}
 function P_WORKER(u){return workerBase()+'/?u='+encodeURIComponent(u);}
@@ -301,7 +301,7 @@ function doLogin(){
 function initLoginCanvas(){}
 function doLogout(){
   closeMenu();
-  ['terminal','browser','notepad','sysinfo','files','code'].forEach(closeApp);
+  ['terminal','browser','notepad','sysinfo','files','code','clicker'].forEach(closeApp);
   var d=document.getElementById('desktop');
   d.style.transition='opacity 0.4s'; d.style.opacity='0';
   setTimeout(function(){d.style.display='none';d.style.opacity='1';var pwd=document.getElementById('login-pw');if(pwd)pwd.value='';showLogin();},400);
@@ -858,6 +858,7 @@ function openApp(id){
   if(id==='browser'&&!brTabs.length)newBrTab();
   if(id==='files')fxRender('files');
   if(id==='code')ceInit();
+  if(id==='clicker')acInit();
 }
 
 var fxView='files';
@@ -1061,6 +1062,109 @@ function ceRun(){
     var o=document.getElementById('ce-output');if(o)o.classList.add('has-error');
   }
 }
+
+/* ============ AUTOCLICKER ============ */
+var acLoaded=false, acRunning=false, acTimer=null, acCount=0;
+var acCPS=10;            // clicks per second
+var acHotkey='F6';      // start/stop hotkey
+var acCapturing=false;  // listening for a new hotkey
+var acAlwaysTop=false;
+function acInit(){
+  if(acLoaded){acReassertTop();return;}
+  acLoaded=true;
+  acUpdateUI();
+}
+function acUpdateUI(){
+  var hk=document.getElementById('ac-hotkey');if(hk)hk.textContent=acCapturing?'press a key...':acHotkey;
+  var cps=document.getElementById('ac-cps');if(cps&&document.activeElement!==cps)cps.value=acCPS;
+  var cpsVal=document.getElementById('ac-cps-val');if(cpsVal)cpsVal.textContent=acCPS+' / sec';
+  var cnt=document.getElementById('ac-count');if(cnt)cnt.textContent=acCount;
+  var st=document.getElementById('ac-status');if(st){st.textContent=acRunning?'RUNNING':'STOPPED';st.className='ac-status '+(acRunning?'on':'off');}
+  var btn=document.getElementById('ac-toggle');if(btn)btn.innerHTML=acRunning?'<i class="ti ti-player-stop"></i>Stop':'<i class="ti ti-player-play"></i>Start';
+  var tp=document.getElementById('ac-top');if(tp)tp.classList.toggle('on',acAlwaysTop);
+  var target=document.getElementById('ac-target');if(target)target.classList.toggle('armed',acRunning);
+}
+function acSetCPS(v){
+  v=Math.max(1,Math.min(100,parseInt(v,10)||1));
+  acCPS=v;
+  if(acRunning){acStop();acStart();}
+  acUpdateUI();
+}
+function acStart(){
+  if(acRunning)return;
+  acRunning=true;
+  var interval=Math.max(10,Math.round(1000/acCPS));
+  acTimer=setInterval(acTick,interval);
+  acUpdateUI();
+}
+function acStop(){
+  acRunning=false;
+  if(acTimer){clearInterval(acTimer);acTimer=null;}
+  acUpdateUI();
+}
+function acToggle(){ if(acRunning)acStop(); else acStart(); }
+function acTick(){
+  acCount++;
+  var target=document.getElementById('ac-target');
+  if(target){
+    // visual click feedback + dispatch a real click event on the target
+    target.classList.add('hit');
+    setTimeout(function(){if(target)target.classList.remove('hit');},40);
+    try{target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}catch(e){}
+    acRipple(target);
+  }
+  var cnt=document.getElementById('ac-count');if(cnt)cnt.textContent=acCount;
+}
+function acRipple(target){
+  var r=document.createElement('span');
+  r.className='ac-ripple';
+  target.appendChild(r);
+  setTimeout(function(){if(r&&r.parentNode)r.parentNode.removeChild(r);},420);
+}
+function acResetCount(){acCount=0;acUpdateUI();}
+function acManualClick(){
+  // clicking the target by hand also counts and shows feedback
+  acCount++;
+  var target=document.getElementById('ac-target');
+  if(target){acRipple(target);target.classList.add('hit');setTimeout(function(){if(target)target.classList.remove('hit');},40);}
+  var cnt=document.getElementById('ac-count');if(cnt)cnt.textContent=acCount;
+}
+function acStartCapture(){acCapturing=true;acUpdateUI();}
+function acToggleTop(){
+  acAlwaysTop=!acAlwaysTop;
+  acReassertTop();
+  acUpdateUI();
+}
+function acReassertTop(){
+  var win=document.getElementById('win-clicker');
+  if(!win)return;
+  if(acAlwaysTop){win.style.zIndex=99000;}
+  else if(win.style.zIndex==='99000'){win.style.zIndex=zTop;}
+}
+// Global hotkey + hotkey capture
+document.addEventListener('keydown',function(e){
+  if(acCapturing){
+    e.preventDefault();
+    var k=e.key;
+    if(k==='Escape'){acCapturing=false;acUpdateUI();return;}
+    // normalize
+    if(k===' ')k='Space';
+    else if(k.length===1)k=k.toUpperCase();
+    acHotkey=k;
+    acCapturing=false;
+    acUpdateUI();
+    return;
+  }
+  // don't fire hotkey while typing in an input/textarea
+  var tag=(e.target&&e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea')return;
+  var key=e.key;
+  if(key===' ')key='Space';else if(key.length===1)key=key.toUpperCase();
+  if(key===acHotkey){
+    var win=document.getElementById('win-clicker');
+    if(win&&win.classList.contains('open')){e.preventDefault();acToggle();}
+  }
+});
 
 /* ---- CamScript interpreter (v2) ---- */
 function CamScript(printFn,opts){
@@ -1510,6 +1614,7 @@ function focusApp(id){
   win.style.zIndex=zTop;win.classList.add('open');
   document.querySelectorAll('.tb-app').forEach(function(el){el.classList.remove('focused');});
   var tb=document.getElementById('tb-'+id);if(tb)tb.classList.add('focused');
+  if(typeof acReassertTop==='function')acReassertTop();
 }
 function tbClick(id){var win=document.getElementById('win-'+id);if(!win)return;if(!win.classList.contains('open'))openApp(id);else minApp(id);}
 function initDrag(id){
@@ -1654,7 +1759,7 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   }
 
-  ['terminal','browser','notepad','sysinfo','files','code'].forEach(initDrag);
+  ['terminal','browser','notepad','sysinfo','files','code','clicker'].forEach(initDrag);
 
   var desktop=document.getElementById('desktop');
   if(desktop){
