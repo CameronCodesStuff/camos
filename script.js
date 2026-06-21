@@ -1069,6 +1069,9 @@ var acCPS=10;            // clicks per second
 var acHotkey='F6';      // start/stop hotkey
 var acCapturing=false;  // listening for a new hotkey
 var acAlwaysTop=false;
+var acMouseX=0, acMouseY=0, acMouseTracked=false;
+// Track the real cursor anywhere on screen so we can click wherever it is.
+document.addEventListener('mousemove',function(e){acMouseX=e.clientX;acMouseY=e.clientY;acMouseTracked=true;},true);
 function acInit(){
   if(acLoaded){acReassertTop();return;}
   acLoaded=true;
@@ -1104,16 +1107,36 @@ function acStop(){
 }
 function acToggle(){ if(acRunning)acStop(); else acStart(); }
 function acTick(){
-  acCount++;
-  var target=document.getElementById('ac-target');
-  if(target){
-    // visual click feedback + dispatch a real click event on the target
-    target.classList.add('hit');
-    setTimeout(function(){if(target)target.classList.remove('hit');},40);
-    try{target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}catch(e){}
-    acRipple(target);
+  var x=acMouseX, y=acMouseY;
+  // find whatever element is under the cursor right now
+  var el=document.elementFromPoint(x,y);
+  // don't let the clicker spam its own Start/Stop button or window chrome
+  if(el&&el.closest){
+    if(el.closest('#ac-toggle')||el.closest('#ac-top')||el.closest('.win-bar')||el.closest('#ac-hotkey')||el.closest('#ac-cps')){
+      acFlash(x,y,true);
+      return;
+    }
   }
+  acCount++;
+  if(el){
+    try{
+      var opts={bubbles:true,cancelable:true,view:window,clientX:x,clientY:y};
+      el.dispatchEvent(new MouseEvent('mousedown',opts));
+      el.dispatchEvent(new MouseEvent('mouseup',opts));
+      el.dispatchEvent(new MouseEvent('click',opts));
+    }catch(e){}
+  }
+  acFlash(x,y,false);
   var cnt=document.getElementById('ac-count');if(cnt)cnt.textContent=acCount;
+}
+// little click marker at screen position
+function acFlash(x,y,blocked){
+  var f=document.createElement('div');
+  f.className='ac-click-marker'+(blocked?' blocked':'');
+  f.style.left=x+'px';
+  f.style.top=y+'px';
+  document.body.appendChild(f);
+  setTimeout(function(){if(f&&f.parentNode)f.parentNode.removeChild(f);},400);
 }
 function acRipple(target){
   var r=document.createElement('span');
@@ -1123,7 +1146,7 @@ function acRipple(target){
 }
 function acResetCount(){acCount=0;acUpdateUI();}
 function acManualClick(){
-  // clicking the target by hand also counts and shows feedback
+  // clicking the in-app target by hand also counts and shows feedback
   acCount++;
   var target=document.getElementById('ac-target');
   if(target){acRipple(target);target.classList.add('hit');setTimeout(function(){if(target)target.classList.remove('hit');},40);}
