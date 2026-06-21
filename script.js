@@ -6,7 +6,7 @@ var appStartTime = Date.now();
    public proxy fallbacks only.
    Example: "https://camos-proxy.yourname.workers.dev"
    ============================================================ */
-var CAMOS_PROXY = "https://https://camos.detlaffcameron.workers.dev/";
+var CAMOS_PROXY = "https://camos.detlaffcameron.workers.dev/";
 
 function workerBase(){return CAMOS_PROXY.replace(/\/$/,'');}
 function P_WORKER(u){return workerBase()+'/?u='+encodeURIComponent(u);}
