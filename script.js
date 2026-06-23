@@ -6,7 +6,7 @@ var appStartTime = Date.now();
    public proxy fallbacks only.
    Example: "https://camos-proxy.yourname.workers.dev"
    ============================================================ */
-var CAMOS_PROXY = "https://camos.detlaffcameron.workers.dev";
+var CAMOS_PROXY = "";
 
 function workerBase(){return CAMOS_PROXY.replace(/\/$/,'');}
 function P_WORKER(u){return workerBase()+'/?u='+encodeURIComponent(u);}
@@ -254,6 +254,8 @@ function bootStep(){
     term.appendChild(div);
     var bs2=document.getElementById('boot');
     if(bs2)bs2.scrollTop=bs2.scrollHeight;
+    // scrolling/printing sound for non-empty lines
+    if(item.x&&String(item.x).trim()!=='')playSnd('bootblip');
   }
   bootIdx++;
   var delay=item.d||(14+Math.random()*34);
@@ -1311,10 +1313,15 @@ function playSnd(type){
     case 'login': tone(523,0,0.12,0.1);tone(659,0.1,0.12,0.1);tone(784,0.2,0.18,0.1); break;
     case 'minimize': tone(500,0,0.08,0.08);tone(360,0.04,0.09,0.07); break;
     case 'toggle': tone(620,0,0.05,0.07,'triangle'); break;
+    case 'bootblip': tone(1200+Math.random()*500,0,0.025,0.025,'square'); break;
     default: tone(600,0,0.05,0.07);
   }
 }
 function sndToggle(){sndOn=!sndOn;try{localStorage.setItem(SND_KEY,sndOn?'1':'0');}catch(e){}if(sndOn)playSnd('toggle');return sndOn;}
+// Unlock/resume audio on the first user gesture (browsers block autoplay)
+function sndPrime(){var ac=sndAC();if(ac&&ac.state==='suspended')ac.resume();}
+document.addEventListener('pointerdown',sndPrime,{once:false});
+document.addEventListener('keydown',sndPrime,{once:false});
 function smToggleSound(){
   var on=sndToggle();
   var el=document.getElementById('sm-sound');
