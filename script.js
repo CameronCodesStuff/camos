@@ -286,10 +286,13 @@ function bootStep(){
     term.appendChild(div);
     var bs2=document.getElementById('boot');
     if(bs2)bs2.scrollTop=bs2.scrollHeight;
-    // scrolling/printing sound for non-empty lines, with occasional variety
+    // typewriter clatter on every line, with variety
     if(item.x&&String(item.x).trim()!==''){
-      if(/Reached target|Startup finished/.test(String(item.x))||Math.random()<0.12)playSnd('bootchunk');
+      var xs=String(item.x);
+      if(/Reached target|Startup finished|Multi-User/.test(xs))playSnd('bootchunk');
       else playSnd('bootblip');
+      // carriage-return bell at the very end of boot
+      if(/Starting desktop session/.test(xs))setTimeout(function(){playSnd('bootbell');},120);
     }
   }
   bootIdx++;
@@ -1349,24 +1352,78 @@ function playSnd(type){
     case 'minimize': tone(500,0,0.08,0.08);tone(360,0.04,0.09,0.07); break;
     case 'toggle': tone(620,0,0.05,0.07,'triangle'); break;
     case 'bootblip': {
-      // soft teletype "tick": a tiny filtered noise burst + a short pitched body
+      // Typewriter key strike: noise transient (hammer) + resonant body + low thunk.
+      var dur=0.05;
+      var sr=ac.sampleRate;
       var nb=ac.createBufferSource();
-      var buf=ac.createBuffer(1,Math.floor(ac.sampleRate*0.03),ac.sampleRate);
-      var dch=buf.getChannelData(0);
-      for(var ni=0;ni<dch.length;ni++)dch[ni]=(Math.random()*2-1)*Math.pow(1-ni/dch.length,2);
+      var buf=ac.createBuffer(1,Math.floor(sr*dur),sr);
+      var d=buf.getChannelData(0);
+      for(var ni=0;ni<d.length;ni++){
+        // sharp exponential-decay noise = the metallic "tk" impact
+        d[ni]=(Math.random()*2-1)*Math.pow(1-ni/d.length,8);
+      }
       nb.buffer=buf;
-      var nf=ac.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2200+Math.random()*1400;nf.Q.value=0.8;
-      var ng=ac.createGain();ng.gain.setValueAtTime(0.05,t);ng.gain.exponentialRampToValueAtTime(0.0001,t+0.03);
-      nb.connect(nf);nf.connect(ng);ng.connect(ac.destination);
-      nb.start(t);nb.stop(t+0.04);
-      // pitched body
-      tone(1300+Math.random()*700,0,0.02,0.022,'square');
+      var hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=1400+Math.random()*600;
+      var ng=ac.createGain();
+      var v=0.10+Math.random()*0.05;
+      ng.gain.setValueAtTime(v,t);
+      ng.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      nb.connect(hp);hp.connect(ng);ng.connect(ac.destination);
+      nb.start(t);nb.stop(t+dur+0.01);
+
+      // short resonant "clack" body — a fast-decaying mid tone
+      var o=ac.createOscillator(),og=ac.createGain();
+      o.type='triangle';o.frequency.setValueAtTime(900+Math.random()*350,t);
+      o.frequency.exponentialRampToValueAtTime(420,t+0.03);
+      og.gain.setValueAtTime(0.05,t);
+      og.gain.exponentialRampToValueAtTime(0.0001,t+0.035);
+      o.connect(og);og.connect(ac.destination);
+      o.start(t);o.stop(t+0.05);
+
+      // tiny low platen thunk for weight
+      var lo=ac.createOscillator(),lg=ac.createGain();
+      lo.type='sine';lo.frequency.value=150+Math.random()*30;
+      lg.gain.setValueAtTime(0.05,t);
+      lg.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
+      lo.connect(lg);lg.connect(ac.destination);
+      lo.start(t);lo.stop(t+0.05);
       break;
     }
     case 'bootchunk': {
-      // occasional lower "carriage" thunk for variety
-      tone(180+Math.random()*60,0,0.05,0.05,'square');
-      tone(90,0,0.06,0.03,'sine');
+      // heavier key/carriage strike — same idea, deeper and louder
+      var sr2=ac.sampleRate, dr=0.07;
+      var nb2=ac.createBufferSource();
+      var bf=ac.createBuffer(1,Math.floor(sr2*dr),sr2);
+      var d2=bf.getChannelData(0);
+      for(var k=0;k<d2.length;k++)d2[k]=(Math.random()*2-1)*Math.pow(1-k/d2.length,6);
+      nb2.buffer=bf;
+      var bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=900+Math.random()*300;bp.Q.value=1.2;
+      var n2g=ac.createGain();n2g.gain.setValueAtTime(0.14,t);n2g.gain.exponentialRampToValueAtTime(0.0001,t+dr);
+      nb2.connect(bp);bp.connect(n2g);n2g.connect(ac.destination);
+      nb2.start(t);nb2.stop(t+dr+0.01);
+      var lo2=ac.createOscillator(),lg2=ac.createGain();
+      lo2.type='sine';lo2.frequency.setValueAtTime(180,t);lo2.frequency.exponentialRampToValueAtTime(90,t+0.06);
+      lg2.gain.setValueAtTime(0.10,t);lg2.gain.exponentialRampToValueAtTime(0.0001,t+0.07);
+      lo2.connect(lg2);lg2.connect(ac.destination);
+      lo2.start(t);lo2.stop(t+0.08);
+      break;
+    }
+    case 'bootbell': {
+      // typewriter carriage-return bell "ding"
+      var b=ac.createOscillator(),bg=ac.createGain();
+      b.type='sine';b.frequency.value=2100;
+      bg.gain.setValueAtTime(0.0001,t);
+      bg.gain.exponentialRampToValueAtTime(0.10,t+0.005);
+      bg.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+      b.connect(bg);bg.connect(ac.destination);
+      b.start(t);b.stop(t+0.55);
+      var b2=ac.createOscillator(),b2g=ac.createGain();
+      b2.type='sine';b2.frequency.value=2940;
+      b2g.gain.setValueAtTime(0.0001,t);
+      b2g.gain.exponentialRampToValueAtTime(0.04,t+0.005);
+      b2g.gain.exponentialRampToValueAtTime(0.0001,t+0.4);
+      b2.connect(b2g);b2g.connect(ac.destination);
+      b2.start(t);b2.stop(t+0.45);
       break;
     }
     case 'bootdone': {
