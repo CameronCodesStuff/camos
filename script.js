@@ -296,7 +296,8 @@ function bootStep(){
     }
   }
   bootIdx++;
-  var delay=item.d||(14+Math.random()*34);
+  var delay=item.d||(8+Math.random()*18);
+  if(item.d)delay=item.d*0.6; // tighten the longer fixed pauses too
   setTimeout(bootStep,delay);
 }
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -1353,14 +1354,14 @@ function playSnd(type){
     case 'toggle': tone(620,0,0.05,0.07,'triangle'); break;
     case 'bootblip': {
       // Typewriter key strike: noise transient (hammer) + resonant body + low thunk.
-      var dur=0.05;
+      var dur=0.038;
       var sr=ac.sampleRate;
       var nb=ac.createBufferSource();
       var buf=ac.createBuffer(1,Math.floor(sr*dur),sr);
       var d=buf.getChannelData(0);
       for(var ni=0;ni<d.length;ni++){
         // sharp exponential-decay noise = the metallic "tk" impact
-        d[ni]=(Math.random()*2-1)*Math.pow(1-ni/d.length,8);
+        d[ni]=(Math.random()*2-1)*Math.pow(1-ni/d.length,9);
       }
       nb.buffer=buf;
       var hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=1400+Math.random()*600;
@@ -1374,19 +1375,19 @@ function playSnd(type){
       // short resonant "clack" body — a fast-decaying mid tone
       var o=ac.createOscillator(),og=ac.createGain();
       o.type='triangle';o.frequency.setValueAtTime(900+Math.random()*350,t);
-      o.frequency.exponentialRampToValueAtTime(420,t+0.03);
+      o.frequency.exponentialRampToValueAtTime(420,t+0.024);
       og.gain.setValueAtTime(0.05,t);
-      og.gain.exponentialRampToValueAtTime(0.0001,t+0.035);
+      og.gain.exponentialRampToValueAtTime(0.0001,t+0.026);
       o.connect(og);og.connect(ac.destination);
-      o.start(t);o.stop(t+0.05);
+      o.start(t);o.stop(t+0.04);
 
       // tiny low platen thunk for weight
       var lo=ac.createOscillator(),lg=ac.createGain();
       lo.type='sine';lo.frequency.value=150+Math.random()*30;
       lg.gain.setValueAtTime(0.05,t);
-      lg.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
+      lg.gain.exponentialRampToValueAtTime(0.0001,t+0.03);
       lo.connect(lg);lg.connect(ac.destination);
-      lo.start(t);lo.stop(t+0.05);
+      lo.start(t);lo.stop(t+0.04);
       break;
     }
     case 'bootchunk': {
@@ -2127,7 +2128,7 @@ document.addEventListener('DOMContentLoaded',function(){
   brLoadBookmarks();
   brLoadHistory();
   initBootCanvas();
-  setTimeout(bootStep,250);
+  setTimeout(bootStep,150);
 
   var loginPw=document.getElementById('login-pw');
   if(loginPw){
