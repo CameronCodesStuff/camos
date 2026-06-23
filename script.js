@@ -165,31 +165,52 @@ function wpLoadStore(){
 var NICONS={welcome:'ti-device-desktop',bookmark:'ti-bookmark',notepad:'ti-file-text',wallpaper:'ti-palette',info:'ti-info-circle',error:'ti-alert-circle',download:'ti-download'};
 var ntimer=null, modalCB=null, bootIdx=0, bootAnimId=null;
 var BOOT_LINES=[
-  {t:'',c:'dim',x:'CamBIOS 2.40 — Press DEL to enter setup',d:90},
-  {t:'',c:'dim',x:'Memory Test: 16384 MB ... OK',d:90},
-  {t:'',c:'dim',x:'Booting from /dev/vda1 ...',d:120},
+  {t:'',c:'dim',x:'CamBIOS 2.40 — Press DEL to enter setup',d:80},
+  {t:'',c:'dim',x:'CPU: CamOS Virtual @ 3.40GHz  Cores: '+(navigator.hardwareConcurrency||4),d:60},
+  {t:'',c:'dim',x:'Memory Test: 16384 MB ........ OK',d:90},
+  {t:'',c:'dim',x:'Detecting IDE drives ... vda vdb',d:70},
+  {t:'',c:'dim',x:'Initializing USB controllers ... done',d:70},
+  {t:'',c:'dim',x:'Booting from /dev/vda1 ...',d:110},
   {t:'',c:'dim',x:'',d:30},
-  {t:'',c:'bright',x:'CamOS 3.0.0-cam1 (tty1)',d:120},
+  {t:'',c:'bright',x:'CamOS 3.0.0-cam1 (tty1)',d:110},
   {t:'',c:'dim',x:'Linux-compatible kernel 3.0.0-cam1 #1 SMP x86_64',d:40},
+  {t:'',c:'dim',x:'GRUB loading CamOS 3.0 ... ok',d:60},
   {t:'',c:'dim',x:'',d:30},
-  {raw:1,x:'<span class="boot-dim">[ '+'   0.000142'+' ]</span> Command line: BOOT_IMAGE=/boot/camos-3.0 ro quiet splash'},
+  {raw:1,x:'<span class="boot-dim">[    0.000142 ]</span> Command line: BOOT_IMAGE=/boot/camos-3.0 ro quiet splash'},
+  {raw:1,x:'<span class="boot-dim">[    0.004210 ]</span> x86/fpu: Supporting XSAVE feature 0x002: \'SSE registers\''},
+  {raw:1,x:'<span class="boot-dim">[    0.011882 ]</span> Memory: 16384MB available'},
+  {raw:1,x:'<span class="boot-dim">[    0.024417 ]</span> Calibrating delay loop ... 6800.00 BogoMIPS'},
+  {raw:1,x:'<span class="boot-dim">[    0.041290 ]</span> Mount-cache hash table entries: 8192'},
+  {raw:1,x:'<span class="boot-dim">[    0.066101 ]</span> Initializing cgroup subsys cpuset'},
   {ok:1,x:'Started Load Kernel Modules'},
   {ok:1,x:'Mounted Kernel Debug File System'},
   {ok:1,x:'Mounted POSIX Message Queue File System'},
-  {ok:1,x:'Mounted /dev/vda1 on /'},
+  {ok:1,x:'Mounted Huge Pages File System'},
+  {ok:1,x:'Started Set Up Additional Binary Formats'},
+  {ok:1,x:'Started Journal Service'},
+  {ok:1,x:'Starting Flush Journal to Persistent Storage...'},
+  {ok:1,x:'Started Flush Journal to Persistent Storage'},
+  {ok:1,x:'Starting Load/Save Random Seed...'},
+  {ok:1,x:'Started Load/Save Random Seed'},
   {ok:1,x:'Started Remount Root and Kernel File Systems'},
+  {t:'',c:'dim',x:'fsck: /dev/vda1: clean, 284119/2621440 files',d:70},
+  {ok:1,x:'Mounted /dev/vda1 on /'},
   {ok:1,x:'Reached target Local File Systems'},
   {ok:1,x:'Started Create Static Device Nodes in /dev'},
   {ok:1,x:'Started udev Coldplug all Devices'},
+  {ok:1,x:'Starting udev Kernel Device Manager...'},
   {ok:1,x:'Started udev Kernel Device Manager'},
-  {ok:1,x:'Started Journal Service'},
   {ok:1,x:'Detected '+(navigator.hardwareConcurrency||4)+' CPU core(s)'},
   {ok:1,x:'Detected 16384 MB system memory'},
+  {ok:1,x:'Detected display '+(window.screen?window.screen.width+'x'+window.screen.height:'1920x1080')},
   {ok:1,x:'Started Setup Virtual Console'},
   {ok:1,x:'Started Apply Kernel Variables'},
+  {ok:1,x:'Started Load Kernel Module drm'},
   {ok:1,x:'Reached target System Initialization'},
   {ok:1,x:'Started Daily apt download activities'},
+  {ok:1,x:'Started Daily Cleanup of Temporary Directories'},
   {ok:1,x:'Listening on D-Bus System Message Bus Socket'},
+  {ok:1,x:'Listening on Avahi mDNS/DNS-SD Stack Socket'},
   {ok:1,x:'Reached target Sockets'},
   {ok:1,x:'Reached target Basic System'},
   {ok:1,x:'Started System Logging Service'},
@@ -197,26 +218,36 @@ var BOOT_LINES=[
   {ok:1,x:'Starting Network Manager...'},
   {ok:1,x:'Started Network Manager'},
   {ok:1,x:'Bringing up interface eth0'},
+  {t:'',c:'dim',x:'eth0: link up, 1000 Mbps, full duplex',d:55},
   {ok:1,x:'eth0: acquired DHCP lease 192.168.1.42'},
   {ok:1,x:'Reached target Network'},
+  {ok:1,x:'Starting Network Time Synchronization...'},
   {ok:1,x:'Started Network Time Synchronization'},
+  {t:'',c:'dim',x:'systemd-timesyncd: synchronized to time server',d:55},
   {ok:1,x:'Started Disk Manager'},
+  {ok:1,x:'Started Self Monitoring and Reporting Technology (SMART)'},
   {ok:1,x:'Mounted CamOS Virtual File System'},
   {ok:1,x:'Started Permit User Sessions'},
+  {ok:1,x:'Starting CamScript Runtime Service...'},
   {ok:1,x:'Started CamScript Runtime Service'},
   {ok:1,x:'Started CamOS Proxy Client'},
   {ok:1,x:'Started Accounts Service'},
   {ok:1,x:'Started Authorization Manager'},
+  {ok:1,x:'Started Bluetooth Service'},
+  {ok:1,x:'Started Sound Service (camaudio)'},
   {ok:1,x:'Starting CamOS Window Manager...'},
   {ok:1,x:'Started CamOS Window Manager (cam-wm)'},
+  {ok:1,x:'Started Desktop Compositor'},
   {ok:1,x:'Started Login Service'},
   {ok:1,x:'Started User Manager for UID 1000'},
+  {ok:1,x:'Started Session 1 of user cameron'},
   {ok:1,x:'Reached target Graphical Interface'},
   {ok:1,x:'Reached target Multi-User System'},
+  {ok:1,x:'Startup finished in 1.84s (kernel) + 2.16s (userspace)'},
   {t:'',c:'dim',x:'',d:50},
   {t:'',c:'info',x:'CamOS 3.0  cameron-pc  tty1',d:90},
-  {t:'',c:'dim',x:'cameron-pc login: cameron (automatic)',d:120},
-  {t:'',c:'dim',x:'Starting desktop session ...',d:350}
+  {t:'',c:'dim',x:'cameron-pc login: cameron (automatic)',d:110},
+  {t:'',c:'dim',x:'Starting desktop session ...',d:320}
 ];
 
 
@@ -231,11 +262,12 @@ function bootStep(){
   var term=document.getElementById('boot-term');
   if(bootIdx>=BOOT_LINES.length){
     var cur=document.getElementById('boot-cursor');if(cur)cur.style.display='none';
+    playSnd('bootdone');
     setTimeout(function(){
       var bs=document.getElementById('boot');
       bs.style.transition='opacity 0.4s'; bs.style.opacity='0';
       setTimeout(function(){bs.style.display='none';showLogin();},400);
-    },350);
+    },450);
     return;
   }
   var item=BOOT_LINES[bootIdx];
@@ -254,8 +286,11 @@ function bootStep(){
     term.appendChild(div);
     var bs2=document.getElementById('boot');
     if(bs2)bs2.scrollTop=bs2.scrollHeight;
-    // scrolling/printing sound for non-empty lines
-    if(item.x&&String(item.x).trim()!=='')playSnd('bootblip');
+    // scrolling/printing sound for non-empty lines, with occasional variety
+    if(item.x&&String(item.x).trim()!==''){
+      if(/Reached target|Startup finished/.test(String(item.x))||Math.random()<0.12)playSnd('bootchunk');
+      else playSnd('bootblip');
+    }
   }
   bootIdx++;
   var delay=item.d||(14+Math.random()*34);
@@ -1313,7 +1348,32 @@ function playSnd(type){
     case 'login': tone(523,0,0.12,0.1);tone(659,0.1,0.12,0.1);tone(784,0.2,0.18,0.1); break;
     case 'minimize': tone(500,0,0.08,0.08);tone(360,0.04,0.09,0.07); break;
     case 'toggle': tone(620,0,0.05,0.07,'triangle'); break;
-    case 'bootblip': tone(1200+Math.random()*500,0,0.025,0.025,'square'); break;
+    case 'bootblip': {
+      // soft teletype "tick": a tiny filtered noise burst + a short pitched body
+      var nb=ac.createBufferSource();
+      var buf=ac.createBuffer(1,Math.floor(ac.sampleRate*0.03),ac.sampleRate);
+      var dch=buf.getChannelData(0);
+      for(var ni=0;ni<dch.length;ni++)dch[ni]=(Math.random()*2-1)*Math.pow(1-ni/dch.length,2);
+      nb.buffer=buf;
+      var nf=ac.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2200+Math.random()*1400;nf.Q.value=0.8;
+      var ng=ac.createGain();ng.gain.setValueAtTime(0.05,t);ng.gain.exponentialRampToValueAtTime(0.0001,t+0.03);
+      nb.connect(nf);nf.connect(ng);ng.connect(ac.destination);
+      nb.start(t);nb.stop(t+0.04);
+      // pitched body
+      tone(1300+Math.random()*700,0,0.02,0.022,'square');
+      break;
+    }
+    case 'bootchunk': {
+      // occasional lower "carriage" thunk for variety
+      tone(180+Math.random()*60,0,0.05,0.05,'square');
+      tone(90,0,0.06,0.03,'sine');
+      break;
+    }
+    case 'bootdone': {
+      // pleasant rising triad when boot completes
+      tone(523,0,0.14,0.09);tone(659,0.09,0.14,0.09);tone(880,0.18,0.22,0.1);
+      break;
+    }
     default: tone(600,0,0.05,0.07);
   }
 }
